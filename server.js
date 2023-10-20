@@ -229,7 +229,7 @@ app.post("/createMember", async (req, res) => {
 
 /**
  * @swagger
- * /consultation/new:
+ * /newConsultation:
  *   post:
  *     summary: Create a new consultation
  *     tags: [Consultations]
@@ -280,7 +280,7 @@ app.post("/createMember", async (req, res) => {
  *
 
  */
-app.post("/consultation/new", async (req, res) => {
+app.post("/newConsultation", async (req, res) => {
   try {
     let accessToken = await getCensusAdminToken();
 
