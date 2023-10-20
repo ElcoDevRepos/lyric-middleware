@@ -15,7 +15,7 @@ const options = {
   definition: {
     openapi: "3.0.0",
     info: {
-      title: "Your API Title",
+      title: "mdvirtualcare api",
       version: "1.0.0",
     },
   },
