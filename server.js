@@ -554,7 +554,7 @@ app.post("/setPreferredPharmacy", async (req, res) => {
 /**
  * @swagger
  * /problems:
- *   get:
+ *   post:
  *     summary: Retrieve health record problems
  *     tags: [Health Records]
  *     parameters:
@@ -581,14 +581,12 @@ app.post("/setPreferredPharmacy", async (req, res) => {
  *                     type: string
  *                   problemDate:
  *                     type: string
- *                   // Add other problem properties here as needed
  *       400:
  *         description: Error message
  *       500:
  *         description: Something went wrong
  */
-app.get("/problems", async (req, res) => {
-  console.log(req.body);
+app.post("/problems", async (req, res) => {
   let accessToken = await getSSOAPIToken(req.body.memberExternalId);
   var config = {
     method: "get",
