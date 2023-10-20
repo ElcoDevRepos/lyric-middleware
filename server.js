@@ -351,7 +351,6 @@ app.post("/consultation/new", async (req, res) => {
  *                     type: string
  */
 app.get("/states", async (req, res) => {
-  console.log("MADE IT");
   let accessToken = await getCensusAdminToken();
   var config = {
     method: "get",
@@ -549,6 +548,67 @@ app.post("/setPreferredPharmacy", async (req, res) => {
     }
   } catch (error) {
     res.send(error);
+  }
+});
+
+/**
+ * @swagger
+ * /problems:
+ *   get:
+ *     summary: Retrieve health record problems
+ *     tags: [Health Records]
+ *     parameters:
+ *       - in: body
+ *         name: memberExternalId
+ *         required: true
+ *         schema:
+ *           type: object
+ *           properties:
+ *             memberExternalId:
+ *               type: string
+ *               description: The external ID of the member.
+ *     responses:
+ *       200:
+ *         description: List of health record problems
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   problemName:
+ *                     type: string
+ *                   problemDate:
+ *                     type: string
+ *                   // Add other problem properties here as needed
+ *       400:
+ *         description: Error message
+ *       500:
+ *         description: Something went wrong
+ */
+app.get("/problems", async (req, res) => {
+  console.log(req.body);
+  let accessToken = await getSSOAPIToken(req.body.memberExternalId);
+  var config = {
+    method: "get",
+    maxBodyLength: Infinity,
+    url: base + "/healthRecords",
+    headers: {
+      Authorization: "Bearer " + accessToken,
+    },
+  };
+
+  const response = await axios(config);
+
+  if (response.data) {
+    if (response.data.success) {
+      res.send(response.data.problems);
+    } else {
+      res.send(response.data.message);
+    }
+  } else {
+    res.send("Something went wrong");
   }
 });
 
