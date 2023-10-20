@@ -352,6 +352,7 @@ app.post("/consultation/new", async (req, res) => {
  *                     type: string
  */
 app.get("/states", async (req, res) => {
+  console.log("MADE IT");
   let accessToken = await getCensusAdminToken();
   var config = {
     method: "get",
@@ -553,5 +554,5 @@ app.post("/setPreferredPharmacy", async (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
+  console.log(`Server is running on ${PORT}`);
 });
