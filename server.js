@@ -152,8 +152,6 @@ app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
  *                  type: string
  *               zip:
  *                  type: string
- *               state:
- *                  type: string
  *
  *     responses:
  *       200:
