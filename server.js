@@ -1,6 +1,8 @@
 const express = require("express");
 const axios = require("axios");
 const qs = require("qs");
+const auth = require("basic-auth");
+
 var bodyParser = require("body-parser");
 const swaggerUi = require("swagger-ui-express");
 const swaggerJsdoc = require("swagger-jsdoc");
@@ -31,8 +33,20 @@ const base = "https://portal.getlyric.com/go/api";
 // Middleware to handle JSON requests
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+const authMiddleware = (req, res, next) => {
+  const user = auth(req);
 
-async function getSSOAPIToken(memberExternalId) {
+  const USERNAME = process.env.SWAGGER_USERNAME;
+  const PASSWORD = process.env.SWAGGER_PASSWORD;
+
+  if (!user || user.name !== USERNAME || user.pass !== PASSWORD) {
+    res.set("WWW-Authenticate", 'Basic realm="example"');
+    return res.status(401).send("Authentication required.");
+  }
+
+  return next();
+};
+async function getSSOAPIToken(memberExternalId, groupCode) {
   try {
     var data = new FormData();
     data.append("email", "MTMAIM01SSO@mytelemedicine.com");
@@ -51,7 +65,7 @@ async function getSSOAPIToken(memberExternalId) {
         token = token.replace("Bearer ", "").trim();
         const queryData = qs.stringify({
           memberExternalId: memberExternalId,
-          groupCode: "MTMWOLIS01",
+          groupCode: groupCode,
         });
         config = {
           method: "post",
@@ -102,7 +116,12 @@ async function getCensusAdminToken() {
   }
 }
 
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+app.use(
+  "/api-docs",
+  authMiddleware,
+  swaggerUi.serve,
+  swaggerUi.setup(swaggerSpec)
+);
 
 /**
  * @swagger
@@ -391,26 +410,35 @@ app.get("/states", async (req, res) => {
  *                 type: string
  *                 description: Zip code for the pharmacy search
  *                 example: "75001"
+ *               groupCode:
+ *                  type: string
  
  */
 app.post("/pharmacies", async (req, res) => {
-  let accessToken = await getSSOAPIToken(req.body.memberExternalId);
-  var config = {
-    method: "post",
-    maxBodyLength: Infinity,
-    url: base + "/memberAccount/searchPharmacy",
-    headers: {
-      Authorization: "Bearer " + accessToken,
-    },
-    data: qs.stringify({
-      pharmacyName: req.body.pharmacyName,
-      pharmacyzipCode: req.body.zip,
-    }),
-  };
+  try {
+    let accessToken = await getSSOAPIToken(
+      req.body.memberExternalId,
+      req.body.groupCode
+    );
+    var config = {
+      method: "post",
+      maxBodyLength: Infinity,
+      url: base + "/memberAccount/searchPharmacy",
+      headers: {
+        Authorization: "Bearer " + accessToken,
+      },
+      data: qs.stringify({
+        pharmacyName: req.body.pharmacyName,
+        pharmacyzipCode: req.body.zip,
+      }),
+    };
 
-  const response = await axios(config);
+    const response = await axios(config);
 
-  res.send(response.data);
+    res.send(response.data);
+  } catch (error) {
+    res.send(error);
+  }
 });
 
 /**
@@ -504,6 +532,9 @@ app.post(
  *                 type: string
  *                 description: ID of the pharmacy to set as preferred
  *                 example: "PHARM123"
+ *               groupCode:
+ *                 type: string
+ *
  *     responses:
  *       200:
  *         description: Success response indicating if the operation was successful
@@ -523,7 +554,10 @@ app.post(
  */
 app.post("/setPreferredPharmacy", async (req, res) => {
   try {
-    let accessToken = await getSSOAPIToken(req.body.memberExternalId);
+    let accessToken = await getSSOAPIToken(
+      req.body.memberExternalId,
+      req.body.groupCode
+    );
 
     var data = new FormData();
     data.append("sureScriptPharmacyId", req.body.pharmacyId);
@@ -567,6 +601,8 @@ app.post("/setPreferredPharmacy", async (req, res) => {
  *             memberExternalId:
  *               type: string
  *               description: The external ID of the member.
+ *             groupCode:
+ *                type: string
  *     responses:
  *       200:
  *         description: List of health record problems
@@ -587,26 +623,33 @@ app.post("/setPreferredPharmacy", async (req, res) => {
  *         description: Something went wrong
  */
 app.post("/problems", async (req, res) => {
-  let accessToken = await getSSOAPIToken(req.body.memberExternalId);
-  var config = {
-    method: "get",
-    maxBodyLength: Infinity,
-    url: base + "/healthRecords",
-    headers: {
-      Authorization: "Bearer " + accessToken,
-    },
-  };
+  try {
+    let accessToken = await getSSOAPIToken(
+      req.body.memberExternalId,
+      req.body.groupCode
+    );
+    var config = {
+      method: "get",
+      maxBodyLength: Infinity,
+      url: base + "/healthRecords",
+      headers: {
+        Authorization: "Bearer " + accessToken,
+      },
+    };
 
-  const response = await axios(config);
+    const response = await axios(config);
 
-  if (response.data) {
-    if (response.data.success) {
-      res.send(response.data.problems);
+    if (response.data) {
+      if (response.data.success) {
+        res.send(response.data.problems);
+      } else {
+        res.send(response.data.message);
+      }
     } else {
-      res.send(response.data.message);
+      res.send("Something went wrong");
     }
-  } else {
-    res.send("Something went wrong");
+  } catch (error) {
+    res.send(error);
   }
 });
 
