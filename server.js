@@ -297,14 +297,12 @@ app.post("/createMember", async (req, res) => {
  *                  items:
  *                      type: int
  *                      example: "use result from problems api"
- *                roi:
+ *               roi:
  *                  type: string
  *                  example: "What would you have done if you didn't have this service? Member selects one of the following: PCP,Urgent Care,Emergency Room,Nothing"
- *                userId:
+ *               userId:
  *                  type: string
  *                  example: "id of the user created with createMember"
- *
-
  */
 app.post("/newConsultation", async (req, res) => {
   try {
@@ -692,7 +690,7 @@ app.post("/problems", async (req, res) => {
  *                     type: string
  *                   name:
  *                     type: string
- *                    offset:
+ *                   offset:
  *                      type: string
  *       400:
  *         description: Error message
