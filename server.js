@@ -29,6 +29,7 @@ const swaggerSpec = swaggerJsdoc(options);
 
 const app = express();
 const PORT = process.env.PORT || 8000;
+
 const base = "https://portal.getlyric.com/go/api";
 // Middleware to handle JSON requests
 app.use(express.json());
