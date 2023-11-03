@@ -659,7 +659,45 @@ app.post("/problems", async (req, res) => {
     res.send(error);
   }
 });
-
+/**
+ * @swagger
+ * /timezones:
+ *   post:
+ *     summary: Retrieve all timezones
+ *     tags: [Timezones]
+ *     parameters:
+ *       - in: body
+ *         name: memberExternalId
+ *         required: true
+ *         schema:
+ *           type: object
+ *           properties:
+ *             memberExternalId:
+ *               type: string
+ *               description: The external ID of the member.
+ *             groupCode:
+ *                type: string
+ *     responses:
+ *       200:
+ *         description: List of all timezones
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   timezone_id:
+ *                     type: string
+ *                   name:
+ *                     type: string
+ *                    offset:
+ *                      type: string
+ *       400:
+ *         description: Error message
+ *       500:
+ *         description: Something went wrong
+ */
 app.get("/timezones", async (req, res) => {
   try {
     let accessToken = await getSSOAPIToken(
