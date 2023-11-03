@@ -242,7 +242,7 @@ app.post("/createMember", async (req, res) => {
     }
   } catch (error) {
     console.log(error);
-    res.send("Something went wrong");
+    res.send(error.response.data.message);
   }
 });
 
@@ -296,6 +296,12 @@ app.post("/createMember", async (req, res) => {
  *                  items:
  *                      type: int
  *                      example: "use result from problems api"
+ *                roi:
+ *                  type: string
+ *                  example: "What would you have done if you didn't have this service? Member selects one of the following: PCP,Urgent Care,Emergency Room,Nothing"
+ *                userId:
+ *                  type: string
+ *                  example: "id of the user created with createMember"
  *
 
  */
@@ -321,6 +327,7 @@ app.post("/newConsultation", async (req, res) => {
       roi: req.body.roi,
     };
 
+    console.log(payload);
     const config = {
       method: "post",
       url: base + "/consultation/new",
@@ -642,6 +649,37 @@ app.post("/problems", async (req, res) => {
     if (response.data) {
       if (response.data.success) {
         res.send(response.data.problems);
+      } else {
+        res.send(response.data.message);
+      }
+    } else {
+      res.send("Something went wrong");
+    }
+  } catch (error) {
+    res.send(error);
+  }
+});
+
+app.get("/timezones", async (req, res) => {
+  try {
+    let accessToken = await getSSOAPIToken(
+      req.body.memberExternalId,
+      req.body.groupCode
+    );
+    var config = {
+      method: "get",
+      maxBodyLength: Infinity,
+      url: base + "/timezones/all",
+      headers: {
+        Authorization: "Bearer " + accessToken,
+      },
+    };
+
+    const response = await axios(config);
+
+    if (response.data) {
+      if (response.data.success) {
+        res.send(response.data.timezones);
       } else {
         res.send(response.data.message);
       }
