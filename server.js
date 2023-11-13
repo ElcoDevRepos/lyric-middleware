@@ -106,11 +106,11 @@ async function getCensusAdminToken() {
   var data = new FormData();
   const env = process.env.ENVIRONMENT;
 
-  if (env != "staging") {
-    data.append("email", "MTMAIM01@mytelemedicine.com"); // PROD
+  if (env == "staging") {
+    data.append("email", "MTMAIM01@mytelemedicine.com"); // STAGING
     data.append("password", "!vse5d4BzL1s0u#irN@!");
   } else {
-    data.append("email", "MTMMDVC01@mytelemedicine.com"); // STAGING
+    data.append("email", "MTMMDVC01@mytelemedicine.com"); // PROD
     data.append("password", "|faeiXj-4d9UD1aLf9w9");
   }
 
