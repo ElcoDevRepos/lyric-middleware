@@ -7,8 +7,10 @@ var bodyParser = require("body-parser");
 const swaggerUi = require("swagger-ui-express");
 const swaggerJsdoc = require("swagger-jsdoc");
 const multer = require("multer");
-const upload = multer();
 let Blob;
+var storage = multer.memoryStorage(); // Storing files in memory
+var upload = multer({ storage: storage });
+require("dotenv").config();
 
 import("fetch-blob").then((module) => {
   Blob = module.Blob;
@@ -30,7 +32,10 @@ const swaggerSpec = swaggerJsdoc(options);
 const app = express();
 const PORT = process.env.PORT || 8000;
 
-const base = "https://staging.getlyric.com/go/api"; //"https://portal.getlyric.com/go/api";
+const base =
+  process.env.ENVIRONMENT == "staging"
+    ? "https://staging.getlyric.com/go/api"
+    : "https://portal.getlyric.com/go/api";
 // Middleware to handle JSON requests
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -99,8 +104,16 @@ async function getSSOAPIToken(memberExternalId, groupCode) {
 
 async function getCensusAdminToken() {
   var data = new FormData();
-  data.append("email", "MTMAIM01@mytelemedicine.com");
-  data.append("password", "!vse5d4BzL1s0u#irN@!");
+  const env = process.env.ENVIRONMENT;
+
+  if (env != "staging") {
+    data.append("email", "MTMAIM01@mytelemedicine.com"); // PROD
+    data.append("password", "!vse5d4BzL1s0u#irN@!");
+  } else {
+    data.append("email", "MTMMDVC01@mytelemedicine.com"); // STAGING
+    data.append("password", "|faeiXj-4d9UD1aLf9w9");
+  }
+
   var config = {
     method: "post",
     maxBodyLength: Infinity,
@@ -242,7 +255,6 @@ app.post("/createMember", async (req, res) => {
       res.send(response.data.message);
     }
   } catch (error) {
-    console.log(error);
     res.send(error.response.data.message);
   }
 });
@@ -489,14 +501,25 @@ app.post("/pharmacies", async (req, res) => {
 app.post(
   "/addAttachment",
   upload.single("AttachmentFile"),
-  async (req, res) => {
+  async (req, res, next) => {
+    // req.file is the 'AttachmentFile' file
+    // req.body will hold the text fields, if there were any
+
+    if (!req.file) {
+      return res.status(400).send("No file uploaded.");
+    }
+
     try {
       let accessToken = await getCensusAdminToken();
+      // Now, set up the form data to send the received file
       var data = new FormData();
       const blob = new Blob([req.file.buffer]);
-
-      // Use the stream when appending to FormData
-      data.append("AttachmentFile", blob, req.file.originalname);
+      // We use buffer and originalname since the file is stored in memory
+      data.append("AttachmentFile", blob, {
+        contentType: req.file.mimetype,
+        name: "AttachmentFile",
+        filename: req.file.originalname,
+      });
 
       var config = {
         method: "post",
@@ -507,11 +530,9 @@ app.post(
         },
         data: data,
       };
-
       const response = await axios(config);
       res.send(response.data);
     } catch (error) {
-      console.log(error.response);
       res.status(500).send(error.message);
     }
   }
