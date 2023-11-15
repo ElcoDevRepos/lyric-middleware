@@ -507,13 +507,9 @@ app.post(
       let accessToken = await getCensusAdminToken();
       // Now, set up the form data to send the received file
       var data = new FormData();
-      const blob = new Blob([req.file.buffer]);
+      const blob = new Blob([req.file.buffer], { type: req.file.mimetype });
       // We use buffer and originalname since the file is stored in memory
-      data.append("AttachmentFile", blob, {
-        contentType: req.file.mimetype,
-        name: "AttachmentFile",
-        filename: req.file.originalname,
-      });
+      data.append("AttachmentFile", blob, req.file.originalname);
 
       var config = {
         method: "post",
