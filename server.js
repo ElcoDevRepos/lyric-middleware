@@ -332,7 +332,6 @@ app.post("/newConsultation", async (req, res) => {
       roi: req.body.roi,
     };
 
-    console.log(payload);
     const config = {
       method: "post",
       url: base + "/consultation/new",
