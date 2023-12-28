@@ -124,11 +124,200 @@ async function getCensusAdminToken() {
   }
 }
 
+async function createMemberHelper(req, accessToken) {
+    if (!req) throw new Error("Request is required");
+    if (!accessToken) {
+        accessToken = await getCensusAdminToken();
+    }
+
+    let member = {
+        firstName: req.body.firstName,
+        lastName: req.body.lastName,
+        dob: req.body.dateOfBirth,
+        gender: req.body.gender,
+        memberExternalId: req.body.memberExternalId,
+        state: req.body.state,
+        groupCode: req.body.groupCode,
+        planId: req.body.planId,
+        planDetailsId: req.body.planDetailsId,
+        heightFeet: req.body.heightFeet,
+        heightInches: req.body.heightInches,
+        weight: req.body.weight,
+        email: req.body.email,
+        phone: req.body.phone,
+        address: req.body.address,
+        address2: req.body.address2,
+        state: req.body.state,
+        zip: req.body.zip,
+    };
+
+    var data = new FormData();
+    data.append("primaryExternalId", member.memberExternalId);
+    data.append("groupCode", member.groupCode);
+    data.append("planId", member.planId);
+    data.append("planDetailsId", member.planDetailsId);
+    data.append("firstName", member.firstName);
+    data.append("lastName", member.lastName);
+    data.append("dob", member.dob);
+    data.append("gender", member.gender);
+    data.append("email", member.email);
+    data.append("primaryPhone", member.phone);
+    data.append("heightFeet", member.heightFeet);
+    data.append("heightInches", member.heightInches);
+    data.append("weight", member.weight);
+    data.append("address", member.address);
+    data.append("address2", member.address2);
+    data.append("city", member.city);
+    data.append("stateId", member.state);
+    data.append("timezoneId", "");
+    data.append("zipCode", member.zip);
+
+    var config = {
+        method: "post",
+        maxBodyLength: Infinity,
+        url: base + "/census/createMember",
+        headers: {
+            Authorization: "Bearer " + accessToken,
+        },
+        data: data,
+    };
+
+    return axios(config);
+}
+
+async function createConsultationHelper(req, accessToken) {
+    if (!req) throw new Error("Request is required");
+    if (!accessToken) {
+        accessToken = await getCensusAdminToken();
+    }
+
+    const payload = {
+      modalities: req.body.modalities,
+      consultationUserId: req.body.userId,
+      state: req.body.state,
+      phoneNumber: req.body.phoneNumber,
+      videoConsultReadyTextNumber: req.body.phoneNumber,
+      sureScriptPharmacy_id: req.body.pharmacyId,
+      patientDescription: req.body.description,
+      translate: req.body.translate,
+      whenScheduled: req.body.whenScheduled,
+      timezoneOffset: req.body.timezoneOffset,
+      problems: {
+        chiefComplaint: req.body.chiefComplaint,
+        otherProblems: req.body.otherProblems,
+      },
+      roi: req.body.roi,
+    };
+
+    const config = {
+      method: "post",
+      url: base + "/consultation/new",
+      data: { payload: JSON.stringify(payload) },
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        Authorization: "Bearer " + accessToken,
+      },
+    };
+
+    return axios(config);
+}
+
+async function addAttachmentHelper(req, accessToken) {
+    if (!req) throw new Error("Request is required");
+    if (!accessToken) {
+        accessToken = await getCensusAdminToken();
+    }
+    
+    var data = new FormData();
+    const blob = new Blob([req.file.buffer], { type: req.file.mimetype });
+    // We use buffer and originalname since the file is stored in memory
+    data.append("AttachmentFile", blob, req.file.originalname);
+    
+    var config = {
+        method: "post",
+        maxBodyLength: Infinity,
+        url: base + "/attachment/add/" + req.body.userId,
+        headers: {
+        Authorization: "Bearer " + accessToken,
+        },
+        data: data,
+    };
+    return axios(config);
+}
+
+/* 1-1 with https://docs.getlyric.com/#8537a622-8775-4d83-8192-75944d8b847c */
+/* Does this use the SSOToken or the CensusAdminToken? */
+async function updateMemberTerminationDateHelper(req, termDate, accessToken) {
+    if (!req) return null;
+    if (!accessToken) {
+        accessToken = await getCensusAdminToken();
+    }
+
+    var data = new FormData();
+    data.append("groupCode", req.body.groupCode);
+    data.append("memberExternalId", req.body.memberExternalId);
+    data.append("terminationDate", termDate);
+
+    var config = {
+        method: "post",
+        maxBodyLength: Infinity,
+        url: base + "/census/updateTerminationDate",
+        headers: {
+            Authorization: "Bearer " + accessToken,
+        },
+        data: data,
+    };
+    return axios(config);
+}
+
+async function doesMemberExist(req, accessToken) {
+    if (!req) return null;
+    if (!accessToken) {
+        accessToken = await getCensusAdminToken();
+    }
+
+    var data = new FormData();
+    data.append("email", req.body.email);
+
+    var config = {
+        method: "post",
+        maxBodyLength: Infinity,
+        url: base + "/census/validateEmail",
+        headers: {
+            Authorization: "Bearer " + accessToken,
+        },
+        data: data,
+    };
+    const response = await axios(config);
+    if (response.data.success) {
+        return response.data.availableForUse;
+    } else {
+        throw new Error(response.data.message);
+    }
+}
+
+/* Converts a date object to mm/dd/yyyy format
+    * Does the API need UTC date? */
+function dateObjToAPIDateString(dateOb) {
+    const dateObj = new Date();
+    if (!dateObj) return null;
+    const month = dateObj.getUTCMonth() + 1;
+    const day = dateObj.getUTCDate();
+    const year = dateObj.getUTCFullYear();
+    if (month < 10) {
+        monthString = "0" + month;
+    }
+    if (day < 10) {
+        dayString = "0" + day;
+    }
+    return monthString + "/" + dayString + "/" + year;
+}
+
 app.use(
-  "/api-docs",
-  authMiddleware,
-  swaggerUi.serve,
-  swaggerUi.setup(swaggerSpec)
+    "/api-docs",
+    authMiddleware,
+    swaggerUi.serve,
+    swaggerUi.setup(swaggerSpec)
 );
 
 /**
@@ -189,59 +378,8 @@ app.post("/createMember", async (req, res) => {
   try {
     let accessToken = await getCensusAdminToken();
 
-    let member = {
-      firstName: req.body.firstName,
-      lastName: req.body.lastName,
-      dob: req.body.dateOfBirth,
-      gender: req.body.gender,
-      memberExternalId: req.body.memberExternalId,
-      state: req.body.state,
-      groupCode: req.body.groupCode,
-      planId: req.body.planId,
-      planDetailsId: req.body.planDetailsId,
-      heightFeet: req.body.heightFeet,
-      heightInches: req.body.heightInches,
-      weight: req.body.weight,
-      email: req.body.email,
-      phone: req.body.phone,
-      address: req.body.address,
-      address2: req.body.address2,
-      state: req.body.state,
-      zip: req.body.zip,
-    };
-
-    var data = new FormData();
-    data.append("primaryExternalId", member.memberExternalId);
-    data.append("groupCode", member.groupCode);
-    data.append("planId", member.planId);
-    data.append("planDetailsId", member.planDetailsId);
-    data.append("firstName", member.firstName);
-    data.append("lastName", member.lastName);
-    data.append("dob", member.dob);
-    data.append("gender", member.gender);
-    data.append("email", member.email);
-    data.append("primaryPhone", member.phone);
-    data.append("heightFeet", member.heightFeet);
-    data.append("heightInches", member.heightInches);
-    data.append("weight", member.weight);
-    data.append("address", member.address);
-    data.append("address2", member.address2);
-    data.append("city", member.city);
-    data.append("stateId", member.state);
-    data.append("timezoneId", "");
-    data.append("zipCode", member.zip);
-
-    var config = {
-      method: "post",
-      maxBodyLength: Infinity,
-      url: base + "/census/createMember",
-      headers: {
-        Authorization: "Bearer " + accessToken,
-      },
-      data: data,
-    };
-
-    const response = await axios(config);
+    /* Broke most out into a helper function for reuse */
+    const response = await createMemberHelper(req, accessToken);
     if (response.data.success) {
       console.log(response);
       res.send(response.data);
@@ -314,35 +452,9 @@ app.post("/newConsultation", async (req, res) => {
   try {
     let accessToken = await getCensusAdminToken();
 
-    const payload = {
-      modalities: req.body.modalities,
-      consultationUserId: req.body.userId,
-      state: req.body.state,
-      phoneNumber: req.body.phoneNumber,
-      videoConsultReadyTextNumber: req.body.phoneNumber,
-      sureScriptPharmacy_id: req.body.pharmacyId,
-      patientDescription: req.body.description,
-      translate: req.body.translate,
-      whenScheduled: req.body.whenScheduled,
-      timezoneOffset: req.body.timezoneOffset,
-      problems: {
-        chiefComplaint: req.body.chiefComplaint,
-        otherProblems: req.body.otherProblems,
-      },
-      roi: req.body.roi,
-    };
+    /* Broke most out into a helper function for reuse */
+    const response = await createConsultationHelper(req, accessToken);
 
-    const config = {
-      method: "post",
-      url: base + "/consultation/new",
-      data: { payload: JSON.stringify(payload) },
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-        Authorization: "Bearer " + accessToken,
-      },
-    };
-
-    const response = await axios(config);
     if (response.data) {
       if (response.data.success) {
         res.send("Consultation created successfully");
@@ -504,22 +616,8 @@ app.post(
 
     try {
       let accessToken = await getCensusAdminToken();
-      // Now, set up the form data to send the received file
-      var data = new FormData();
-      const blob = new Blob([req.file.buffer], { type: req.file.mimetype });
-      // We use buffer and originalname since the file is stored in memory
-      data.append("AttachmentFile", blob, req.file.originalname);
-
-      var config = {
-        method: "post",
-        maxBodyLength: Infinity,
-        url: base + "/attachment/add/" + req.body.userId,
-        headers: {
-          Authorization: "Bearer " + accessToken,
-        },
-        data: data,
-      };
-      const response = await axios(config);
+      /* Broke most out into a helper function for reuse */
+      const response = await addAttachmentHelper(req, accessToken);
       res.send(response.data);
     } catch (error) {
       res.status(500).send(error.message);
@@ -736,6 +834,63 @@ app.get("/timezones", async (req, res) => {
   } catch (error) {
     res.send(error);
   }
+});
+
+app.post("/reorder", upload.single("AttachmentFile"), async (req, res) => {
+    /* This will be the object sent as a response that will
+        * communicate what happened during the reorder process.
+        * May be useful for error handling on the client's end.
+        */
+    let finalResponse = {
+        success: false,
+        createMemberData: undefined,
+        terminationDateData: undefined,
+        createConsultationData: undefined,
+        addAttachmentData: undefined,
+        error: undefined,
+    };
+    try {
+        let accessToken = await getCensusAdminToken();
+        /* Check if memeber exists */
+        const doesExist = await doesMemberExist(req);
+        if (!doesExist) {
+            /* Create member */
+            const response = await createMemberHelper(req, accessToken);
+            finalResponse.createMemberData = response.data;
+            if (!response.data.success) {
+                /* Should this terminate here? */
+                res.send(finalResponse);
+            }
+        } else {
+            /* Update termination date */
+            const rightNow = new Date();
+            /* Add 6 months to current date */
+            const termDateObj = new Date(rightNow.setMonth(rightNow.getMonth() + 6));
+            /* Need to ensure this works as expected */
+            const termDate = dateObjToAPIDateString(termDateObj);
+            const response = await updateMemberTerminationDateHelper(req, termDate, accessToken);
+            finalResponse.terminationDateData = response.data;
+            /* Should this terminate here? */
+            if (!response.data.success) {
+                res.send(finalResponse);
+            }
+        }
+
+        /* Create consultation */
+        const consultationResponse = await createConsultationHelper(req, accessToken);
+        finalResponse.createConsultationData = consultationResponse.data;
+
+        /* Add attachment */
+        const attachmentResponse = await addAttachmentHelper(req, accessToken);
+        finalResponse.addAttachmentData = attachmentResponse.data;
+
+        finalResponse.success = consultationResponse.data.success && attachmentResponse.data.success;
+
+        res.send(finalResponse);
+    } catch (error) {
+        finalResponse.error = error;
+        res.send(finalResponse);
+    }
 });
 
 app.listen(PORT, () => {
