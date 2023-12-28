@@ -279,7 +279,7 @@ async function doesMemberExist(req, accessToken) {
     };
     const response = await axios(config);
     if (response.data.success) {
-        return response.data.availableForUse;
+        return !response.data.availableForUse;
     } else {
         throw new Error(response.data.message);
     }
@@ -984,7 +984,7 @@ app.post("/reorder", upload.single("AttachmentFile"), async (req, res) => {
 
         res.send(finalResponse);
     } catch (error) {
-        finalResponse.error = error.response.data.message;
+        finalResponse.error = error.response ? error.response.data.message : error.message;
         res.status(500).send(finalResponse);
     }
 });
