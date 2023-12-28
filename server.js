@@ -36,6 +36,7 @@ const base =
   process.env.ENVIRONMENT == "staging"
     ? "https://staging.getlyric.com/go/api"
     : "https://portal.getlyric.com/go/api";
+console.log(base);
 // Middleware to handle JSON requests
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -52,50 +53,50 @@ const authMiddleware = (req, res, next) => {
 
   return next();
 };
-async function getSSOAPIToken(memberExternalId, groupCode) {
-  try {
+
+async function login(email, password) {
     var data = new FormData();
-    data.append("email", "MTMAIM01SSO@mytelemedicine.com");
-    data.append("password", "CdGt{[1qIQ,+[xZZ@K3Q");
+    data.append("email", email);
+    data.append("password", password);
     var config = {
       method: "post",
       maxBodyLength: Infinity,
       url: base + "/login",
       data: data,
     };
-    var response = await axios(config);
+    return axios(config);
+}
+async function getSSOAPIToken(memberExternalId, groupCode) {
+  try {
+    var response = await login("MTMAIM01SSO@mytelemedicine.com", "CdGt{[1qIQ,+[xZZ@K3Q");
+      console.log(response.data);
+      if (response.data && response.data.success == true) {
+          var token = response.headers.authorization;
+          token = token.replace("Bearer ", "").trim();
+          const queryData = qs.stringify({
+              memberExternalId: memberExternalId,
+              groupCode: groupCode,
+          });
+          config = {
+              method: "post",
+              maxBodyLength: Infinity,
+              url: base + "/sso/createAPIAccessToken",
+              data: queryData,
+              headers: {
+                  Authorization: `Bearer ${token}`,
+              },
+          };
+          response = await axios(config);
+          if (response.data.success) {
+              return response.data.accessToken;
+          } else {
+              console.log(response.data);
 
-    if (response.data) {
-      if (response.data.success) {
-        var token = response.headers.authorization;
-        token = token.replace("Bearer ", "").trim();
-        const queryData = qs.stringify({
-          memberExternalId: memberExternalId,
-          groupCode: groupCode,
-        });
-        config = {
-          method: "post",
-          maxBodyLength: Infinity,
-          url: base + "/sso/createAPIAccessToken",
-          data: queryData,
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        };
-        response = await axios(config);
-        if (response.data.success) {
-          return response.data.accessToken;
-        } else {
-          console.log(response.data);
-
-          return null;
-        }
+              return null;
+          }
       } else {
-        return null;
+          return null;
       }
-    } else {
-      return null;
-    }
   } catch (error) {
     console.log(error);
     return null;
@@ -103,25 +104,13 @@ async function getSSOAPIToken(memberExternalId, groupCode) {
 }
 
 async function getCensusAdminToken() {
-  var data = new FormData();
-
-  data.append("email", "MTMAIM01@mytelemedicine.com");
-  data.append("password", "!vse5d4BzL1s0u#irN@!");
-
-  var config = {
-    method: "post",
-    maxBodyLength: Infinity,
-    url: base + "/login",
-    data: data,
-  };
-  var response = await axios(config);
-  if (response.data) {
-    if (response.data.success) {
+  var response = await login("MTMAIM01@mytelemedicine.com", "!vse5d4BzL1s0u#irN@!");
+  if (response.data && response.data.success == true) {
       var token = response.headers.authorization;
       token = token.replace("Bearer ", "").trim();
       return token;
-    }
   }
+  return null;
 }
 
 async function createMemberHelper(req, accessToken) {
@@ -238,7 +227,7 @@ async function addAttachmentHelper(req, accessToken) {
         maxBodyLength: Infinity,
         url: base + "/attachment/add/" + req.body.userId,
         headers: {
-        Authorization: "Bearer " + accessToken,
+            Authorization: "Bearer " + accessToken,
         },
         data: data,
     };
@@ -255,7 +244,7 @@ async function updateMemberTerminationDateHelper(req, termDate, accessToken) {
 
     var data = new FormData();
     data.append("groupCode", req.body.groupCode);
-    data.append("memberExternalId", req.body.memberExternalId);
+    data.append("primaryExternalId", req.body.memberExternalId);
     data.append("terminationDate", termDate);
 
     var config = {
@@ -298,19 +287,21 @@ async function doesMemberExist(req, accessToken) {
 
 /* Converts a date object to mm/dd/yyyy format
     * Does the API need UTC date? */
-function dateObjToAPIDateString(dateOb) {
-    const dateObj = new Date();
+function dateObjToAPIDateString(dateObj) {
     if (!dateObj) return null;
     const month = dateObj.getUTCMonth() + 1;
     const day = dateObj.getUTCDate();
     const year = dateObj.getUTCFullYear();
+    let monthString = month.toString();
+    let dayString = day.toString();
+    yearString = year.toString();
     if (month < 10) {
         monthString = "0" + month;
     }
     if (day < 10) {
         dayString = "0" + day;
     }
-    return monthString + "/" + dayString + "/" + year;
+    return monthString + "/" + dayString + "/" + yearString;
 }
 
 app.use(
@@ -543,6 +534,10 @@ app.post("/pharmacies", async (req, res) => {
       req.body.memberExternalId,
       req.body.groupCode
     );
+    if (!accessToken) {
+        res.status(500).send({message: "Invalid credentials"});
+        return;
+    }
     var config = {
       method: "post",
       maxBodyLength: Infinity,
@@ -560,6 +555,7 @@ app.post("/pharmacies", async (req, res) => {
 
     res.send(response.data);
   } catch (error) {
+    console.log(error);
     res.send(error);
   }
 });
@@ -836,6 +832,103 @@ app.get("/timezones", async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /reorder:
+ *   post:
+ *     summary: Do something
+ *     tags: [Reorder]
+ *     consumes:
+ *       - multipart/form-data
+ *     parameters:
+ *       - in: formData
+ *         name: AttachmentFile
+ *         type: file
+ *         description: The file to upload.
+ *         required: true
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               firstName:
+ *                 type: string
+ *               lastName:
+ *                 type: string
+ *               dateOfBirth:
+ *                 type: string
+ *               gender:
+ *                 type: string
+ *               memberExternalId:
+ *                 type: string
+ *               groupCode:
+ *                  type: string
+ *               planId:
+ *                  type: string
+ *               planDetailsId:
+ *                  type: string
+ *               heightFeet:
+ *                  type: string
+ *               heightInches:
+ *                  type: string
+ *               weight:
+ *                  type: string
+ *               address:
+ *                  type: string
+ *               address2:
+ *                  type: string
+ *               email:
+ *                  type: string
+ *               phone:
+ *                  type: string
+ *               zip:
+ *                  type: string
+ *               modalities:
+ *                  type: array
+ *                  items:
+ *                      type: string
+ *                      example: "phone or video"
+ *               state:
+ *                  type: string
+ *                  example: "TN"
+ *               pharmacyId:
+ *                  type: int
+ *                  example: 1234
+ *               description:
+ *                  type: string
+ *               translate:
+ *                  type: string
+ *                  example: "english or spanish"
+ *               whenScheduled:
+ *                  type: string
+ *                  example: "now or date/time | '2016-08-01 17:30:00'"
+ *               timezoneOffset:
+ *                  type: string
+ *                  example: "use result from timezones api, blank when scheduled as 'now'"
+ *               chiefComplaint:
+ *                  type: int
+ *                  example: "use result from problems api"
+ *               otherProblems:
+ *                  type: array
+ *                  items:
+ *                      type: int
+ *                      example: "use result from problems api"
+ *               roi:
+ *                  type: string
+ *                  example: "What would you have done if you didn't have this service? Member selects one of the following: PCP,Urgent Care,Emergency Room,Nothing"
+ *               userId:
+ *                  type: string
+ *                  example: "id of the user created with createMember. If member already exists, this field is required."
+ *
+ *
+ *     responses:
+ *       200:
+ *         description: Reorder completed successfully
+ *       500:
+ *         description: Something went wrong
+ */
 app.post("/reorder", upload.single("AttachmentFile"), async (req, res) => {
     /* This will be the object sent as a response that will
         * communicate what happened during the reorder process.
@@ -849,6 +942,7 @@ app.post("/reorder", upload.single("AttachmentFile"), async (req, res) => {
         addAttachmentData: undefined,
         error: undefined,
     };
+    req.body.phoneNumber = req.body.phone;
     try {
         let accessToken = await getCensusAdminToken();
         /* Check if memeber exists */
@@ -857,10 +951,12 @@ app.post("/reorder", upload.single("AttachmentFile"), async (req, res) => {
             /* Create member */
             const response = await createMemberHelper(req, accessToken);
             finalResponse.createMemberData = response.data;
+            /* Should this terminate here? */
             if (!response.data.success) {
-                /* Should this terminate here? */
-                res.send(finalResponse);
+                res.status(500).send(finalResponse);
+                return;
             }
+            req.body.userId = response.data.userId;
         } else {
             /* Update termination date */
             const rightNow = new Date();
@@ -870,9 +966,9 @@ app.post("/reorder", upload.single("AttachmentFile"), async (req, res) => {
             const termDate = dateObjToAPIDateString(termDateObj);
             const response = await updateMemberTerminationDateHelper(req, termDate, accessToken);
             finalResponse.terminationDateData = response.data;
-            /* Should this terminate here? */
             if (!response.data.success) {
-                res.send(finalResponse);
+                res.status(500).send(finalResponse);
+                return;
             }
         }
 
@@ -888,8 +984,8 @@ app.post("/reorder", upload.single("AttachmentFile"), async (req, res) => {
 
         res.send(finalResponse);
     } catch (error) {
-        finalResponse.error = error;
-        res.send(finalResponse);
+        finalResponse.error = error.response.data.message;
+        res.status(500).send(finalResponse);
     }
 });
 
