@@ -852,7 +852,7 @@ app.get("/timezones", async (req, res) => {
  * @swagger
  * /reorder:
  *   post:
- *     summary: Do something
+ *     summary: Creates a member (if member already exists, it adds a termination date to the member), creates a consultation and then uploads a file
  *     tags: [Reorder]
  *     consumes:
  *       - multipart/form-data
