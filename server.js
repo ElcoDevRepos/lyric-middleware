@@ -549,7 +549,6 @@ app.post("/pharmacies", async (req, res) => {
       req.body.memberExternalId,
       req.body.groupCode
     );
-    console.log(accessToken);
     if (!accessToken) {
       res.status(500).send({ message: "Invalid credentials" });
       return;
@@ -906,9 +905,12 @@ app.get("/timezones", async (req, res) => {
  *                  items:
  *                      type: string
  *                      example: "phone or video"
- *               state:
+ *               consultationState:
  *                  type: string
- *                  example: "TN"
+ *                  example: "State where consultation is taking place. Use state abbreviation."
+ *               memberStateId:
+ *                  type: string
+ *                  example: "State where member resides. Use state ID from /states."
  *               pharmacyId:
  *                  type: int
  *                  example: 1234
@@ -964,15 +966,20 @@ app.post("/reorder", upload.single("AttachmentFile"), async (req, res) => {
     /* Check if memeber exists */
     const doesExist = await doesMemberExist(req);
     if (!doesExist) {
-      /* Create member */
+      /* Create member takes state id and consultation takes state abbreviation */
+      const savedStateAbbreviation = req.body.consultationState;
+      req.body.state = req.body.memberStateId;
+        /* Create member */
       const response = await createMemberHelper(req, accessToken);
+      req.body.state = savedStateAbbreviation;
+
       finalResponse.createMemberData = response.data;
       /* Should this terminate here? */
       if (!response.data.success) {
         res.status(500).send(finalResponse);
         return;
       }
-      req.body.userId = response.data.userId;
+      req.body.userId = response.data.userid;
     } else {
       /* Update termination date */
       const rightNow = new Date();
