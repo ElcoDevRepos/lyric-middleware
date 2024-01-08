@@ -133,7 +133,7 @@ async function createMemberHelper(req, accessToken) {
   if (!accessToken) {
     accessToken = await getCensusAdminToken();
   }
-
+  console.log(req.body);
   let member = {
     firstName: req.body.firstName,
     lastName: req.body.lastName,
@@ -194,11 +194,10 @@ async function createConsultationHelper(req, accessToken) {
   if (!accessToken) {
     accessToken = await getCensusAdminToken();
   }
-
   const payload = {
-    modalities: req.body.modalities,
+    modalities: [req.body.modalities],
     consultationUserId: req.body.userId,
-    state: req.body.state,
+    state: req.body.state || req.body.consultationState,
     phoneNumber: req.body.phoneNumber,
     videoConsultReadyTextNumber: req.body.phoneNumber,
     sureScriptPharmacy_id: req.body.pharmacyId,
@@ -213,6 +212,7 @@ async function createConsultationHelper(req, accessToken) {
     roi: req.body.roi,
   };
 
+  console.log(payload);
   const config = {
     method: "post",
     url: base + "/consultation/new",
@@ -256,12 +256,12 @@ async function updateMemberTerminationDateHelper(req, termDate, accessToken) {
   if (!accessToken) {
     accessToken = await getCensusAdminToken();
   }
+  var helperData = new FormData();
+  helperData.append("groupCode", req.body.groupCode);
+  helperData.append("primaryExternalId", req.body.memberExternalId);
+  helperData.append("terminationDate", termDate);
 
-  var data = new FormData();
-  data.append("groupCode", req.body.groupCode);
-  data.append("primaryExternalId", req.body.memberExternalId);
-  data.append("terminationDate", termDate);
-
+  console.log(helperData);
   var config = {
     method: "post",
     maxBodyLength: Infinity,
@@ -269,7 +269,7 @@ async function updateMemberTerminationDateHelper(req, termDate, accessToken) {
     headers: {
       Authorization: "Bearer " + accessToken,
     },
-    data: data,
+    data: helperData,
   };
   return axios(config);
 }
@@ -380,7 +380,7 @@ app.use(
  *       500:
  *         description: Something went wrong
  */
-app.post("/createMember", async (req, res) => {
+app.post("/createMember", upload.none(), async (req, res) => {
   try {
     let accessToken = await getCensusAdminToken();
 
@@ -614,27 +614,23 @@ app.post("/pharmacies", async (req, res) => {
  *       500:
  *         description: Something went wrong
  */
-app.post(
-  "/addAttachment",
-  upload.single("AttachmentFile"),
-  async (req, res, next) => {
-    // req.file is the 'AttachmentFile' file
-    // req.body will hold the text fields, if there were any
+app.post("/addAttachment", upload.none(), async (req, res, next) => {
+  // req.file is the 'AttachmentFile' file
+  // req.body will hold the text fields, if there were any
 
-    if (!req.file) {
-      return res.status(400).send("No file uploaded.");
-    }
-
-    try {
-      let accessToken = await getCensusAdminToken();
-      /* Broke most out into a helper function for reuse */
-      const response = await addAttachmentHelper(req, accessToken);
-      res.send(response.data);
-    } catch (error) {
-      res.status(500).send(error.message);
-    }
+  if (!req.file) {
+    return res.status(400).send("No file uploaded.");
   }
-);
+
+  try {
+    let accessToken = await getCensusAdminToken();
+    /* Broke most out into a helper function for reuse */
+    const response = await addAttachmentHelper(req, accessToken);
+    res.send(response.data);
+  } catch (error) {
+    res.status(500).send(error.message);
+  }
+});
 
 /**
  * @swagger
@@ -864,7 +860,7 @@ app.get("/timezones", async (req, res) => {
  *     requestBody:
  *       required: true
  *       content:
- *         application/json:
+ *         multipart/form-data:
  *           schema:
  *             type: object
  *             properties:
@@ -901,10 +897,8 @@ app.get("/timezones", async (req, res) => {
  *               zip:
  *                  type: string
  *               modalities:
- *                  type: array
- *                  items:
- *                      type: string
- *                      example: "phone or video"
+ *                  type: string
+ *                  example: "phone or video"
  *               consultationState:
  *                  type: string
  *                  example: "State where consultation is taking place. Use state abbreviation."
@@ -929,10 +923,8 @@ app.get("/timezones", async (req, res) => {
  *                  type: int
  *                  example: "use result from problems api"
  *               otherProblems:
- *                  type: array
- *                  items:
- *                      type: int
- *                      example: "use result from problems api"
+ *                  type: string
+ *                  example: "use result from problems api"
  *               roi:
  *                  type: string
  *                  example: "What would you have done if you didn't have this service? Member selects one of the following: PCP,Urgent Care,Emergency Room,Nothing"
@@ -969,7 +961,7 @@ app.post("/reorder", upload.single("AttachmentFile"), async (req, res) => {
       /* Create member takes state id and consultation takes state abbreviation */
       const savedStateAbbreviation = req.body.consultationState;
       req.body.state = req.body.memberStateId;
-        /* Create member */
+      /* Create member */
       const response = await createMemberHelper(req, accessToken);
       req.body.state = savedStateAbbreviation;
 
@@ -998,12 +990,12 @@ app.post("/reorder", upload.single("AttachmentFile"), async (req, res) => {
         return;
       }
     }
-
     /* Create consultation */
     const consultationResponse = await createConsultationHelper(
       req,
       accessToken
     );
+    console.log(consultationResponse);
     finalResponse.createConsultationData = consultationResponse.data;
 
     /* Add attachment */
