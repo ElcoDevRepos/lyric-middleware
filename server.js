@@ -133,7 +133,6 @@ async function createMemberHelper(req, accessToken) {
   if (!accessToken) {
     accessToken = await getCensusAdminToken();
   }
-  console.log(req.body);
   let member = {
     firstName: req.body.firstName,
     lastName: req.body.lastName,
@@ -212,7 +211,6 @@ async function createConsultationHelper(req, accessToken) {
     roi: req.body.roi,
   };
 
-  console.log(payload);
   const config = {
     method: "post",
     url: base + "/consultation/new",
@@ -261,7 +259,6 @@ async function updateMemberTerminationDateHelper(req, termDate, accessToken) {
   helperData.append("primaryExternalId", req.body.memberExternalId);
   helperData.append("terminationDate", termDate);
 
-  console.log(helperData);
   var config = {
     method: "post",
     maxBodyLength: Infinity,
@@ -387,7 +384,6 @@ app.post("/createMember", upload.none(), async (req, res) => {
     /* Broke most out into a helper function for reuse */
     const response = await createMemberHelper(req, accessToken);
     if (response.data.success) {
-      console.log(response);
       res.send(response.data);
     } else {
       res.send(response.data.message);
@@ -476,6 +472,336 @@ app.post("/newConsultation", async (req, res) => {
     }
   }
 });
+/**
+ * @swagger
+ * /newConsultation:
+ *   post:
+ *     summary: Create a new consultation
+ *     tags: [Consultations]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               groupCode:
+ *                 type: string
+ *               modality:
+ *                 type: string
+ *                 example: "phone or video"
+ *               state:
+ *                 type: string
+ *                 example: "State where member resides. Use state ID from /states."
+ *               phoneNumber:
+ *                 type: string
+ *                 example: "1234567890"
+ *               pharmacyId:
+ *                 type: int
+ *                 example: 1234
+ *               memberExternalId:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               translate:
+ *                  type: string
+ *                  example: "en or es"
+ *               whenScheduled:
+ *                  type: string
+ *                  example: "now or date/time | '2016-08-01 17:30:00'"
+ *               timezoneOffset:
+ *                  type: string
+ *                  example: "use result from timezones api, blank when scheduled as 'now'"
+ *               chiefComplaint:
+ *                  type: int
+ *                  example: "use result from problems api"
+ *               otherProblems:
+ *                  type: string
+ *                  items:
+ *                      type: int
+ *                      example: "use result from problems api. Comma separated list of problem IDs Ex: 1,2,3"
+ *               roi:
+ *                  type: string
+ *                  example: "What would you have done if you didn't have this service? Member selects one of the following: PCP,Urgent Care,Emergency Room,Nothing"
+ *               userId:
+ *                  type: string
+ *                  example: "id of the user created with createMember"
+ *               prescriptionRefillNeeded:
+ *                   type: boolean
+ *                   example: true
+ *               prescriptionDetails:
+ *                   type: string
+ *                   example: "Prescription details"
+ *               provider:
+ *                  type: string
+ *                  example: "id returned from /providers"
+ *               timeslot:
+ *                  type: string
+ *                  example: "id returned from /providers"
+ */
+app.post("/newConsultationWithType", async (req, res) => {
+  try {
+    const groupCode = req.body.groupCode;
+    const modality = req.body.modality;
+    const state = parseInt(req.body.state);
+    const phoneNumber = req.body.phoneNumber;
+    const pharmacyId = parseInt(req.body.pharmacyId);
+    const memberExternalId = req.body.memberExternalId;
+    const description = req.body.description;
+    const translate = req.body.translate;
+    const whenScheduled = req.body.whenScheduled;
+    const timezoneOffset = req.body.timezoneOffset;
+    const chiefComplaint = parseInt(req.body.chiefComplaint);
+    const otherProblems = req.body.otherProblems
+      .split(",")
+      .map((problem) => parseInt(problem));
+    const roi = req.body.roi;
+    const userId = parseInt(req.body.userId);
+    let prescriptionRefillNeeded = req.body.prescriptionRefillNeeded;
+    const prescriptionDetails = req.body.prescriptionDetails;
+    const type = req.body.type;
+    const provider = req.body.provider;
+    const timeslot = req.body.timeslot;
+    if (
+      !groupCode ||
+      !modality ||
+      !state ||
+      !phoneNumber ||
+      !pharmacyId ||
+      !memberExternalId ||
+      !description ||
+      !translate ||
+      !whenScheduled ||
+      !chiefComplaint ||
+      !roi ||
+      !userId ||
+      !prescriptionRefillNeeded ||
+      !type
+    ) {
+      res.status(400).send("Missing required fields");
+      return;
+    }
+    prescriptionRefillNeeded = prescriptionRefillNeeded == "true";
+
+    if (prescriptionRefillNeeded && !prescriptionDetails) {
+      res.status(400).send("Prescription details required");
+      return;
+    }
+    if (
+      type !== "primarycare" &&
+      type !== "urgentcare" &&
+      type !== "psychiatry" &&
+      type !== "psychology" &&
+      type !== "dermatology"
+    ) {
+      res.status(400).send("Invalid type");
+      return;
+    }
+
+    if (modality !== "phone" && modality !== "video") {
+      res.status(400).send("Invalid modality");
+      return;
+    }
+
+    const url = base + "/consultation/createConsultation/" + type;
+
+    const patient = await canPatientConsult(
+      memberExternalId,
+      groupCode,
+      type,
+      res,
+      modality
+    );
+
+    if (patient) {
+      const patientRecords = await startConsult(
+        userId,
+        modality,
+        res,
+        type,
+        memberExternalId,
+        groupCode
+      );
+
+      if (patientRecords) {
+        const personal = {
+          heightFeet: patientRecords.patient.ehr.personal[0].heightFeet,
+          heightInches: patientRecords.patient.ehr.personal[0].heightInches,
+          weight: patientRecords.patient.ehr.personal[0].weight,
+          breastfeeding: patientRecords.patient.ehr.personal[0].breastfeeding,
+          pregnant: patientRecords.patient.ehr.personal[0].pregnant,
+          last_menstruation_date:
+            patientRecords.patient.ehr.personal[0].last_menstruation_date,
+        };
+        const attachments = patientRecords.patient.ehr.attachments || [];
+        delete patientRecords.patient.ehr.attachments;
+        delete patientRecords.patient.ehr.personal;
+        delete patientRecords.patient.ehr.doseSpotConfirmed;
+        delete patientRecords.patient.ehr.nonTransferrableAllergies;
+        delete patientRecords.patient.ehr.nonTransferrableMedications;
+        patientRecords.patient.ehr = Object.fromEntries(
+          Object.entries(patientRecords.patient.ehr).map(([key, value]) => [
+            key.replace(/([A-Z])/g, "_$1").toLowerCase(),
+            value,
+          ])
+        );
+
+        let appointment_details;
+        if (type == "urgentcare") {
+          appointment_details = {
+            when_scheduled: whenScheduled,
+            consult_time_zone: timezoneOffset,
+            preferred_language: translate,
+          };
+        } else {
+          appointment_details = {
+            provider_id: provider,
+            time_slot_id: timeslot,
+            consult_time_zone: "America/Chicago",
+          };
+        }
+        console.log(patientRecords.patient.profile);
+        const patientPayload = {
+          patient: {
+            user_id: userId,
+            ehr: {
+              ...patientRecords.patient.ehr,
+              attachments: attachments,
+              personal: personal,
+            },
+          },
+          payment: {
+            fee: 0.0,
+            nonce: "",
+          },
+          modality: modality,
+          sureScriptPharmacy_id: pharmacyId,
+          appointment_details: appointment_details,
+          state: state,
+          reason_for_visit: description,
+          prescription_refill: {
+            is_needed: false,
+            prescription_details: "",
+          },
+          patientPhone: phoneNumber,
+          labs: [],
+          problems: {
+            chief_complaint_id: chiefComplaint,
+            other_problems: otherProblems,
+          },
+        };
+        let accessToken = await getSSOAPIToken(memberExternalId, groupCode);
+        var config = {
+          method: "post",
+          maxBodyLength: Infinity,
+          url: url,
+          data: patientPayload,
+          headers: {
+            Authorization: "Bearer " + accessToken,
+          },
+        };
+
+        try {
+          const response = await axios(config);
+
+          if (response.status == 200) {
+            if (response.data.success) {
+              res.send(response.data);
+            } else {
+              res.status(400).send(response.data.message);
+            }
+          } else {
+            res.status(500).send("Something went wrong");
+          }
+        } catch (error) {
+          res.status(400).send(error.response.data.message);
+        }
+      }
+    }
+  } catch (error) {
+    res.status(500).send("Something went wrong");
+  }
+});
+
+canPatientConsult = async (
+  memberExternalId,
+  groupCode,
+  type,
+  res,
+  modality
+) => {
+  let accessToken = await getSSOAPIToken(memberExternalId, groupCode);
+  const url =
+    base +
+    "/v2/consultation/eligibility?consultation_type=" +
+    type +
+    "&modality=" +
+    modality;
+
+  var config = {
+    method: "get",
+    maxBodyLength: Infinity,
+    url: url,
+    headers: {
+      Authorization: "Bearer " + accessToken,
+    },
+  };
+
+  try {
+    const response = await axios(config);
+    if (response.status == 200) {
+      if (response.data.success) {
+        return response.data;
+      } else {
+        res.status(400).send(response.data.message);
+      }
+    } else {
+      res.status(500).send("Something went wrong");
+    }
+  } catch (error) {
+    res.status(500).send(error.response.data.message);
+  }
+};
+startConsult = async (
+  userId,
+  modality,
+  res,
+  type,
+  memberExternalId,
+  groupCode
+) => {
+  let accessToken = await getSSOAPIToken(memberExternalId, groupCode);
+  var config = {
+    method: "get",
+    maxBodyLength: Infinity,
+    url:
+      base +
+      "/v2/consultation/" +
+      type +
+      "?user_id=" +
+      userId +
+      "&modality=" +
+      modality,
+    headers: {
+      Authorization: "Bearer " + accessToken,
+    },
+  };
+
+  try {
+    const response = await axios(config);
+    if (response.status == 200) {
+      if (response.data.success) {
+        return response.data;
+      } else {
+        res.status(400).send(response.data.message);
+      }
+    } else {
+      res.status(500).send("Something went wrong");
+    }
+  } catch (error) {
+    res.status(500).send(error.response.data.message);
+  }
+};
 
 /**
  * @swagger
@@ -516,8 +842,110 @@ app.get("/states", async (req, res) => {
 
 /**
  * @swagger
+ * /providers:
+ *   get:
+ *     summary: Retrieve provider availability
+ *     description: This endpoint retrieves the availability of providers based on the provided criteria.
+ *     parameters:
+ *       - in: query
+ *         name: type
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The type of consultation.
+ *       - in: query
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The user's identifier.
+ *       - in: query
+ *         name: state
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The state for the consultation. Returned from /states.
+ *       - in: query
+ *         name: date
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The date for the consultation.
+ *       - in: query
+ *         name: memberExternalId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The external ID of the member.
+ *       - in: query
+ *         name: groupCode
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The group code for the member.
+ *       - in: query
+ *         name: pageNumber
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The page number for pagination.
+ *     responses:
+ *       200:
+ *         description: A successful response with the availability data.
+ *       400:
+ *         description: Missing required fields.
+ */
+app.get("/providers", async (req, res) => {
+  const type = req.query.type;
+  const userId = req.query.userId;
+  const state = req.query.state;
+  const date = req.query.date;
+  const memberExternalId = req.query.memberExternalId;
+  const groupCode = req.query.groupCode;
+  const pageNumber = req.query.pageNumber;
+  let accessToken = await getSSOAPIToken(memberExternalId, groupCode);
+
+  if (
+    !type ||
+    !userId ||
+    !state ||
+    !date ||
+    !memberExternalId ||
+    !groupCode ||
+    !pageNumber
+  ) {
+    res.status(400).send("Missing required fields");
+    return;
+  }
+  var config = {
+    method: "get",
+    maxBodyLength: Infinity,
+    url:
+      base +
+      "/v2/consultation/availability?consultation_type=" +
+      type +
+      "&userId=" +
+      userId +
+      "&state=" +
+      state +
+      "&date=" +
+      date +
+      "&pageNumber=" +
+      pageNumber,
+    headers: {
+      Authorization: "Bearer " + accessToken,
+    },
+  };
+
+  const response = await axios(config);
+
+  res.send(response.data);
+});
+
+/**
+ * @swagger
  * /pharmacies:
- *   post:
+ *   get:
  *     summary: Search for pharmacies
  *     tags: [Pharmacies]
  *     requestBody:
@@ -543,11 +971,11 @@ app.get("/states", async (req, res) => {
  *                  type: string
  
  */
-app.post("/pharmacies", async (req, res) => {
+app.get("/pharmacies", async (req, res) => {
   try {
     let accessToken = await getSSOAPIToken(
-      req.body.memberExternalId,
-      req.body.groupCode
+      req.query.memberExternalId,
+      req.query.groupCode
     );
     if (!accessToken) {
       res.status(500).send({ message: "Invalid credentials" });
@@ -561,8 +989,8 @@ app.post("/pharmacies", async (req, res) => {
         Authorization: "Bearer " + accessToken,
       },
       data: qs.stringify({
-        pharmacyName: req.body.pharmacyName,
-        pharmacyzipCode: req.body.zip,
+        pharmacyName: req.query.pharmacyName,
+        pharmacyzipCode: req.query.zip,
       }),
     };
 
@@ -695,7 +1123,6 @@ app.post("/setPreferredPharmacy", async (req, res) => {
     };
 
     const response = await axios(config);
-    console.log(response);
     if (response.data) {
       res.send(response.data.success);
     } else {
@@ -991,19 +1418,19 @@ app.post("/reorder", upload.single("AttachmentFile"), async (req, res) => {
       }
     }
     /* Create consultation */
-    const consultationResponse = await createConsultationHelper(
-      req,
-      accessToken
-    );
-    console.log(consultationResponse);
-    finalResponse.createConsultationData = consultationResponse.data;
+    // const consultationResponse = await createConsultationHelper(
+    //   req,
+    //   accessToken
+    // );
+    // console.log(consultationResponse);
+    // finalResponse.createConsultationData = consultationResponse.data;
 
-    /* Add attachment */
-    const attachmentResponse = await addAttachmentHelper(req, accessToken);
-    finalResponse.addAttachmentData = attachmentResponse.data;
+    // /* Add attachment */
+    // const attachmentResponse = await addAttachmentHelper(req, accessToken);
+    // finalResponse.addAttachmentData = attachmentResponse.data;
 
-    finalResponse.success =
-      consultationResponse.data.success && attachmentResponse.data.success;
+    // finalResponse.success =
+    //   consultationResponse.data.success && attachmentResponse.data.success;
 
     res.send(finalResponse);
   } catch (error) {

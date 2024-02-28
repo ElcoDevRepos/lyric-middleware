@@ -2,8 +2,9 @@
   "name": "lyric-middleware",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
+    "start": "nodemon server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -21,5 +22,8 @@
     "stream": "^0.0.2",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.3"
   }
 }
