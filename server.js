@@ -474,7 +474,7 @@ app.post("/newConsultation", async (req, res) => {
 });
 /**
  * @swagger
- * /newConsultation:
+ * /newConsultationWithType:
  *   post:
  *     summary: Create a new consultation
  *     tags: [Consultations]
