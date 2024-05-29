@@ -538,6 +538,9 @@ app.post("/newConsultation", async (req, res) => {
  *               timeslot:
  *                  type: string
  *                  example: "id returned from /providers"
+ *               type:
+ *                  type: string
+ *                  example: "primarycare, urgentcare, psychiatry, psychology, or dermatology"
  */
 app.post("/newConsultationWithType", async (req, res) => {
   try {
