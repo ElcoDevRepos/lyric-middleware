@@ -113,10 +113,10 @@ async function getSSOAPIToken(memberExternalId, groupCode) {
 
 async function getCensusAdminToken() {
   var response = await login(
-    process.env.ENVIRONMENT == "staging"
+    process.env.ENVIRONMENT != "staging"
       ? "MTMAIM01@mytelemedicine.com"
       : "MTMMDVC01@mytelemedicine.com",
-    process.env.ENVIRONMENT == "staging"
+    process.env.ENVIRONMENT != "staging"
       ? "!vse5d4BzL1s0u#irN@!"
       : "|faeiXj-4d9UD1aLf9w9"
   );
