@@ -40,6 +40,12 @@ const base =
 // Middleware to handle JSON requests
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(function(req, res, next) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST');
+  res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,content-type, Authorization');
+  next();
+});
 const authMiddleware = (req, res, next) => {
   const user = auth(req);
 
@@ -1242,7 +1248,7 @@ app.post("/problems", async (req, res) => {
  *       500:
  *         description: Something went wrong
  */
-app.get("/timezones", async (req, res) => {
+app.post("/timezones", async (req, res) => {
   try {
     let accessToken = await getSSOAPIToken(
       req.body.memberExternalId,
