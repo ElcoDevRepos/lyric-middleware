@@ -36,6 +36,10 @@ const base =
   process.env.ENVIRONMENT == "staging"
     ? "https://staging.getlyric.com/go/api"
     : "https://portal.getlyric.com/go/api";
+const baseWD =
+  process.env.ENVIRONMENT == "staging"
+    ? "https://stgwbclientapi.azurewebsites.net"
+    : "";
 
 // Middleware to handle JSON requests
 app.use(express.json());
@@ -1447,6 +1451,71 @@ app.post("/reorder", upload.single("AttachmentFile"), async (req, res) => {
       ? error.response.data.message
       : error.message;
     res.status(500).send(finalResponse);
+  }
+});
+
+app.get("tokenWD", async (req, res) => {
+  if (!req.body) {
+    res.status(400).send("Missing body");
+    return;
+  }
+  try {
+    const response = await axios.get(
+      baseWD + "/Token", {
+        params: req.body
+    });
+    res.send(response.data);
+  } catch (error) {
+    res.status(error.response ?  error.response.status : 500)
+      .send(error.message);
+  }
+});
+
+app.post("/createMemberWD", async (req, res) => {
+  if (!req.body) {
+    res.status(400).send("Missing body");
+    return;
+  }
+  if (!req.headers.authorization) {
+    res.status(401).send("Unauthorized");
+    return;
+  }
+  try {
+    const response = await axios.post(baseWD + "/api/ZapierIntegration/CreateMember", {
+      params: req.body,
+      headers: {
+        Authorization: req.headers.authorization,
+        'Content-Type': 'application/json'
+      }
+    });
+    res.send(response.data);
+  } catch (error) {
+    res.status(error.response ?  error.response.status : 500)
+      .send(error.message);
+  }
+});
+
+app.post("uploadDocumentWD", async (req, res) => {
+  if (!req.body) {
+    res.status(400).send("Missing body");
+    return;
+  }
+  if (!req.headers.authorization) {
+    res.status(401).send("Unauthorized");
+    return;
+  }
+  try {
+    const response = await axios.post(baseWD + "/api/ZapierIntegration/UploadDocument", {
+      params: req.body,
+      headers: {
+        Authorization: req.headers.authorization,
+        'Content-Type': 'application/json'
+      }
+    });
+    res.send(response.data);
+  } catch (error) {
+    res.status(error.response ?  error.response.status
+      : 500).send(error.message);
   }
 });
 
