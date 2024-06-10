@@ -36,6 +36,10 @@ const base =
   process.env.ENVIRONMENT == "staging"
     ? "https://staging.getlyric.com/go/api"
     : "https://portal.getlyric.com/go/api";
+const baseWD =
+  process.env.ENVIRONMENT == "staging"
+    ? "https://stgwbclientapi.azurewebsites.net"
+    : "";
 
 // Middleware to handle JSON requests
 app.use(express.json());
@@ -1441,6 +1445,183 @@ app.post("/reorder", upload.single("AttachmentFile"), async (req, res) => {
       ? error.response.data.message
       : error.message;
     res.status(500).send(finalResponse);
+  }
+});
+
+/**
+  * @swagger
+  * /tokenWD:
+  *   get:
+  *     summary: Obtain an authentication token
+  *     parameters:
+  *       - name: username
+  *         in: body 
+  *         type: string
+  *         required: true
+  *         description: User's email address
+  *       - name: password
+  *         in: body
+  *         type: string
+  *         required: true
+  *         description: User's password
+  *       - name: grant_type
+  *         in: body 
+  *         type: string
+  *         required: true
+  *         description: Grant type
+  *         example: password
+  *     responses:
+  *       200:
+  *         description: Token retrieved successfully
+  *       400:
+  *         description: Bad request
+  *       500:
+  *         description: Internal server error
+  */
+app.get("tokenWD", async (req, res) => {
+  if (!req.body) {
+    res.status(400).send("Missing body");
+    return;
+  }
+  try {
+    const response = await axios.get(
+      baseWD + "/Token", {
+        params: req.body
+    });
+    res.send(response.data);
+  } catch (error) {
+    res.status(error.response ?  error.response.status : 500)
+      .send(error.message);
+  }
+});
+
+/**
+  * @swagger
+  * /createMemberWD:
+  *   post:
+  *     summary: Create a new patient
+  *     requestBody:
+  *       required: true
+  *       content:
+  *         application/json:
+  *           schema:
+  *             type: object
+  *             properties:
+  *               ID:
+  *                 type: integer
+  *               FirstName:
+  *                 type: string
+  *               LastName:
+  *                 type: string
+  *               Email:
+  *                 type: string
+  *               VendorId:
+  *                 type: integer
+  *               Gender:
+  *                 type: string
+  *                 description: M or F
+  *               DateOfBirth:
+  *                 type: string
+  *                 description: MM/DD/YYYY
+  *               PhoneNo:
+  *                 type: string
+  *                 example: 5446546546
+  *               Address1:
+  *                 type: string
+  *               Address2:
+  *                 type: string
+  *               City:
+  *                 type: string
+  *               Zipcode:
+  *                 type: string
+  *     security:
+  *       - bearerAuth: []
+  *     responses:
+  *       200:
+  *         description: Patient created successfully
+  *       400:
+  *         description: Bad request
+  *       500:
+  *         description: Internal server error
+  */
+app.post("/createMemberWD", async (req, res) => {
+  if (!req.body) {
+    res.status(400).send("Missing body");
+    return;
+  }
+  if (!req.headers.authorization) {
+    res.status(401).send("Unauthorized");
+    return;
+  }
+  try {
+    const response = await axios.post(baseWD + "/api/ZapierIntegration/CreateMember", {
+      params: req.body,
+      headers: {
+        Authorization: req.headers.authorization,
+        'Content-Type': 'application/json'
+      }
+    });
+    res.send(response.data);
+  } catch (error) {
+    res.status(error.response ?  error.response.status : 500)
+      .send(error.message);
+  }
+});
+
+/**
+  * @swagger
+  * /uploadDocumentWD:
+  *   post:
+  *     summary: Upload a document for a patient
+  *     requestBody:
+  *       required: true
+  *       content:
+  *         application/json:
+  *           schema:
+  *             type: object
+  *             properties:
+  *               PatientId:
+  *                 type: integer
+  *               ImageName:
+  *                 type: string
+  *                 description: Name of the image with extension
+  *               Description:
+  *                 type: string
+  *                 description: Description of the image
+  *               Stream:
+  *                 type: string
+  *                 description: Base64 encoded image
+  *     security:
+  *       - bearerAuth: []
+  *     responses:
+  *       200:
+  *         description: Patient created successfully
+  *       400:
+  *         description: Bad request
+  *       500:
+  *         description: Internal server error
+  */
+app.post("uploadDocumentWD", async (req, res) => {
+  if (!req.body) {
+    res.status(400).send("Missing body");
+    return;
+  }
+  if (!req.headers.authorization) {
+    res.status(401).send("Unauthorized");
+    return;
+  }
+  try {
+    const response = await axios.post(baseWD + "/api/ZapierIntegration/UploadDocument", {
+      params: req.body,
+      headers: {
+        Authorization: req.headers.authorization,
+        'Content-Type': 'application/json'
+      }
+    });
+    res.send(response.data);
+  } catch (error) {
+    res.status(error.response ?  error.response.status
+      : 500).send(error.message);
   }
 });
 
