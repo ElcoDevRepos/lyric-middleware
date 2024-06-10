@@ -1454,6 +1454,36 @@ app.post("/reorder", upload.single("AttachmentFile"), async (req, res) => {
   }
 });
 
+/**
+  * @swagger
+  * /tokenWD:
+  *   get:
+  *     summary: Obtain an authentication token
+  *     parameters:
+  *       - name: username
+  *         in: body 
+  *         type: string
+  *         required: true
+  *         description: User's email address
+  *       - name: password
+  *         in: body
+  *         type: string
+  *         required: true
+  *         description: User's password
+  *       - name: grant_type
+  *         in: body 
+  *         type: string
+  *         required: true
+  *         description: Grant type
+  *         example: password
+  *     responses:
+  *       200:
+  *         description: Token retrieved successfully
+  *       400:
+  *         description: Bad request
+  *       500:
+  *         description: Internal server error
+  */
 app.get("tokenWD", async (req, res) => {
   if (!req.body) {
     res.status(400).send("Missing body");
@@ -1471,6 +1501,55 @@ app.get("tokenWD", async (req, res) => {
   }
 });
 
+/**
+  * @swagger
+  * /createMemberWD:
+  *   post:
+  *     summary: Create a new patient
+  *     requestBody:
+  *       required: true
+  *       content:
+  *         application/json:
+  *           schema:
+  *             type: object
+  *             properties:
+  *               ID:
+  *                 type: integer
+  *               FirstName:
+  *                 type: string
+  *               LastName:
+  *                 type: string
+  *               Email:
+  *                 type: string
+  *               VendorId:
+  *                 type: integer
+  *               Gender:
+  *                 type: string
+  *                 description: M or F
+  *               DateOfBirth:
+  *                 type: string
+  *                 description: MM/DD/YYYY
+  *               PhoneNo:
+  *                 type: string
+  *                 example: 5446546546
+  *               Address1:
+  *                 type: string
+  *               Address2:
+  *                 type: string
+  *               City:
+  *                 type: string
+  *               Zipcode:
+  *                 type: string
+  *     security:
+  *       - bearerAuth: []
+  *     responses:
+  *       200:
+  *         description: Patient created successfully
+  *       400:
+  *         description: Bad request
+  *       500:
+  *         description: Internal server error
+  */
 app.post("/createMemberWD", async (req, res) => {
   if (!req.body) {
     res.status(400).send("Missing body");
@@ -1495,6 +1574,39 @@ app.post("/createMemberWD", async (req, res) => {
   }
 });
 
+/**
+  * @swagger
+  * /uploadDocumentWD:
+  *   post:
+  *     summary: Upload a document for a patient
+  *     requestBody:
+  *       required: true
+  *       content:
+  *         application/json:
+  *           schema:
+  *             type: object
+  *             properties:
+  *               PatientId:
+  *                 type: integer
+  *               ImageName:
+  *                 type: string
+  *                 description: Name of the image with extension
+  *               Description:
+  *                 type: string
+  *                 description: Description of the image
+  *               Stream:
+  *                 type: string
+  *                 description: Base64 encoded image
+  *     security:
+  *       - bearerAuth: []
+  *     responses:
+  *       200:
+  *         description: Patient created successfully
+  *       400:
+  *         description: Bad request
+  *       500:
+  *         description: Internal server error
+  */
 app.post("uploadDocumentWD", async (req, res) => {
   if (!req.body) {
     res.status(400).send("Missing body");
