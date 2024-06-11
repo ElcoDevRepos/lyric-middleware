@@ -132,64 +132,114 @@ async function getCensusAdminToken() {
   return null;
 }
 
-async function createMemberHelper(req, accessToken) {
+async function getWebDoctorsToken(username, password) {
+  console.log(username, password);
+  let data = qs.stringify({
+    username: username,
+    password: password,
+    grant_type: "password",
+  });
+
+  let config = {
+    method: "get",
+    maxBodyLength: Infinity,
+    url: baseWD + "/Token",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    data: data,
+  };
+  const response = await axios.request(config);
+  console.log("ACCESS TOKEN!!!");
+  return response.data;
+}
+
+async function createMemberHelper(req, accessToken, isWebDoctors = false) {
   if (!req) throw new Error("Request is required");
   if (!accessToken) {
     accessToken = await getCensusAdminToken();
   }
-  let member = {
-    firstName: req.body.firstName,
-    lastName: req.body.lastName,
-    dob: req.body.dateOfBirth,
-    gender: req.body.gender,
-    memberExternalId: req.body.memberExternalId,
-    state: req.body.state,
-    groupCode: req.body.groupCode,
-    planId: req.body.planId,
-    planDetailsId: req.body.planDetailsId,
-    heightFeet: req.body.heightFeet,
-    heightInches: req.body.heightInches,
-    weight: req.body.weight,
-    email: req.body.email,
-    phone: req.body.phone,
-    address: req.body.address,
-    address2: req.body.address2,
-    state: req.body.state,
-    zip: req.body.zip,
-  };
-
+  let member = {};
   var data = new FormData();
-  data.append("primaryExternalId", member.memberExternalId);
-  data.append("groupCode", member.groupCode);
-  data.append("planId", member.planId);
-  data.append("planDetailsId", member.planDetailsId);
-  data.append("firstName", member.firstName);
-  data.append("lastName", member.lastName);
-  data.append("dob", member.dob);
-  data.append("gender", member.gender);
-  data.append("email", member.email);
-  data.append("primaryPhone", member.phone);
-  data.append("heightFeet", member.heightFeet);
-  data.append("heightInches", member.heightInches);
-  data.append("weight", member.weight);
-  data.append("address", member.address);
-  data.append("address2", member.address2);
-  data.append("city", member.city);
-  data.append("stateId", member.state);
-  data.append("timezoneId", "");
-  data.append("zipCode", member.zip);
 
-  var config = {
-    method: "post",
-    maxBodyLength: Infinity,
-    url: base + "/census/createMember",
-    headers: {
-      Authorization: "Bearer " + accessToken,
-    },
-    data: data,
-  };
+  if (isWebDoctors) {
+    member = {
+      ID: 0,
+      FirstName: req.body.firstName,
+      LastName: req.body.lastName,
+      Email: req.body.email,
+      VendorId: 35,
+      Gender: req.body.gender,
+      DateOfBirth: req.body.dateOfBirth,
+      PhoneNo: req.body.phone,
+      Address1: req.body.address,
+      Address2: req.body.address2,
+      City: req.body.city,
+      Zipcode: req.body.zip,
+    };
+    let config = {
+      method: "post",
+      maxBodyLength: Infinity,
+      url: baseWD + "/api/ZapierIntegration/CreateMember",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      data: JSON.stringify(member),
+    };
 
-  return axios(config);
+    return axios.request(config);
+  } else {
+    member = {
+      firstName: req.body.firstName,
+      lastName: req.body.lastName,
+      dob: req.body.dateOfBirth,
+      gender: req.body.gender,
+      memberExternalId: req.body.memberExternalId,
+      state: req.body.state,
+      groupCode: req.body.groupCode,
+      planId: req.body.planId,
+      planDetailsId: req.body.planDetailsId,
+      heightFeet: req.body.heightFeet,
+      heightInches: req.body.heightInches,
+      weight: req.body.weight,
+      email: req.body.email,
+      phone: req.body.phone,
+      address: req.body.address,
+      address2: req.body.address2,
+      state: req.body.state,
+      zip: req.body.zip,
+    };
+    data.append("primaryExternalId", member.memberExternalId);
+    data.append("groupCode", member.groupCode);
+    data.append("planId", member.planId);
+    data.append("planDetailsId", member.planDetailsId);
+    data.append("firstName", member.firstName);
+    data.append("lastName", member.lastName);
+    data.append("dob", member.dob);
+    data.append("gender", member.gender);
+    data.append("email", member.email);
+    data.append("primaryPhone", member.phone);
+    data.append("heightFeet", member.heightFeet);
+    data.append("heightInches", member.heightInches);
+    data.append("weight", member.weight);
+    data.append("address", member.address);
+    data.append("address2", member.address2);
+    data.append("city", member.city);
+    data.append("stateId", member.state);
+    data.append("timezoneId", "");
+    data.append("zipCode", member.zip);
+    var config = {
+      method: "post",
+      maxBodyLength: Infinity,
+      url: base + "/census/createMember",
+      headers: {
+        Authorization: "Bearer " + accessToken,
+      },
+      data: data,
+    };
+
+    return axios(config);
+  }
 }
 
 async function createConsultationHelper(req, accessToken) {
@@ -377,23 +427,48 @@ app.use(
  *
  *     responses:
  *       200:
- *         description: Member created successfully
+ *         description: Member created successfully, returns a userID
  *       500:
  *         description: Something went wrong
  */
 app.post("/createMember", upload.none(), async (req, res) => {
+  const shouldUseWebDoctors = true;
+
   try {
-    let accessToken = await getCensusAdminToken();
+    let accessToken = "";
+    if (shouldUseWebDoctors) {
+      //accessToken = await getWebDoctorsToken(req.body.email, req.body.password);
+      //accessToken = accessToken.access_token;
+    } else {
+      accessToken = await getCensusAdminToken();
+    }
 
     /* Broke most out into a helper function for reuse */
-    const response = await createMemberHelper(req, accessToken);
+    const response = await createMemberHelper(
+      req,
+      accessToken,
+      shouldUseWebDoctors
+    );
+    if (shouldUseWebDoctors) {
+      if (response.data) {
+        if (response.data.Message) {
+          res.send(response.data.Message);
+        } else {
+          res.send(response.data.toString()); // returns an ID
+        }
+      }
+    }
     if (response.data.success) {
       res.send(response.data);
     } else {
       res.send(response.data.message);
     }
   } catch (error) {
-    res.send(error.response.data.message);
+    if (shouldUseWebDoctors) {
+      res.send(error.response.data.Message);
+    } else {
+      res.send(error.response.data.message);
+    }
   }
 });
 
@@ -1449,101 +1524,101 @@ app.post("/reorder", upload.single("AttachmentFile"), async (req, res) => {
 });
 
 /**
-  * @swagger
-  * /tokenWD:
-  *   get:
-  *     summary: Obtain an authentication token
-  *     parameters:
-  *       - name: username
-  *         in: body 
-  *         type: string
-  *         required: true
-  *         description: User's email address
-  *       - name: password
-  *         in: body
-  *         type: string
-  *         required: true
-  *         description: User's password
-  *       - name: grant_type
-  *         in: body 
-  *         type: string
-  *         required: true
-  *         description: Grant type
-  *         example: password
-  *     responses:
-  *       200:
-  *         description: Token retrieved successfully
-  *       400:
-  *         description: Bad request
-  *       500:
-  *         description: Internal server error
-  */
+ * @swagger
+ * /tokenWD:
+ *   get:
+ *     summary: Obtain an authentication token
+ *     parameters:
+ *       - name: username
+ *         in: body
+ *         type: string
+ *         required: true
+ *         description: User's email address
+ *       - name: password
+ *         in: body
+ *         type: string
+ *         required: true
+ *         description: User's password
+ *       - name: grant_type
+ *         in: body
+ *         type: string
+ *         required: true
+ *         description: Grant type
+ *         example: password
+ *     responses:
+ *       200:
+ *         description: Token retrieved successfully
+ *       400:
+ *         description: Bad request
+ *       500:
+ *         description: Internal server error
+ */
 app.get("tokenWD", async (req, res) => {
   if (!req.body) {
     res.status(400).send("Missing body");
     return;
   }
   try {
-    const response = await axios.get(
-      baseWD + "/Token", {
-        params: req.body
+    const response = await axios.get(baseWD + "/Token", {
+      params: req.body,
     });
     res.send(response.data);
   } catch (error) {
-    res.status(error.response ?  error.response.status : 500)
+    res
+      .status(error.response ? error.response.status : 500)
       .send(error.message);
   }
 });
 
 /**
-  * @swagger
-  * /createMemberWD:
-  *   post:
-  *     summary: Create a new patient
-  *     requestBody:
-  *       required: true
-  *       content:
-  *         application/json:
-  *           schema:
-  *             type: object
-  *             properties:
-  *               ID:
-  *                 type: integer
-  *               FirstName:
-  *                 type: string
-  *               LastName:
-  *                 type: string
-  *               Email:
-  *                 type: string
-  *               VendorId:
-  *                 type: integer
-  *               Gender:
-  *                 type: string
-  *                 description: M or F
-  *               DateOfBirth:
-  *                 type: string
-  *                 description: MM/DD/YYYY
-  *               PhoneNo:
-  *                 type: string
-  *                 example: 5446546546
-  *               Address1:
-  *                 type: string
-  *               Address2:
-  *                 type: string
-  *               City:
-  *                 type: string
-  *               Zipcode:
-  *                 type: string
-  *     security:
-  *       - bearerAuth: []
-  *     responses:
-  *       200:
-  *         description: Patient created successfully
-  *       400:
-  *         description: Bad request
-  *       500:
-  *         description: Internal server error
-  */
+ * @swagger
+ * /createMemberWD:
+ *   post:
+ *     summary: Create a new patient
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               ID:
+ *                 type: integer
+ *               FirstName:
+ *                 type: string
+ *               LastName:
+ *                 type: string
+ *               Email:
+ *                 type: string
+ *               VendorId:
+ *                 type: integer
+ *               Gender:
+ *                 type: string
+ *                 description: M or F
+ *               DateOfBirth:
+ *                 type: string
+ *                 description: MM/DD/YYYY
+ *               PhoneNo:
+ *                 type: string
+ *                 example: 5446546546
+ *               Address1:
+ *                 type: string
+ *               Address2:
+ *                 type: string
+ *               City:
+ *                 type: string
+ *               Zipcode:
+ *                 type: string
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Patient created successfully
+ *       400:
+ *         description: Bad request
+ *       500:
+ *         description: Internal server error
+ */
 app.post("/createMemberWD", async (req, res) => {
   if (!req.body) {
     res.status(400).send("Missing body");
@@ -1554,53 +1629,57 @@ app.post("/createMemberWD", async (req, res) => {
     return;
   }
   try {
-    const response = await axios.post(baseWD + "/api/ZapierIntegration/CreateMember", {
-      params: req.body,
-      headers: {
-        Authorization: req.headers.authorization,
-        'Content-Type': 'application/json'
+    const response = await axios.post(
+      baseWD + "/api/ZapierIntegration/CreateMember",
+      {
+        params: req.body,
+        headers: {
+          Authorization: req.headers.authorization,
+          "Content-Type": "application/json",
+        },
       }
-    });
+    );
     res.send(response.data);
   } catch (error) {
-    res.status(error.response ?  error.response.status : 500)
+    res
+      .status(error.response ? error.response.status : 500)
       .send(error.message);
   }
 });
 
 /**
-  * @swagger
-  * /uploadDocumentWD:
-  *   post:
-  *     summary: Upload a document for a patient
-  *     requestBody:
-  *       required: true
-  *       content:
-  *         application/json:
-  *           schema:
-  *             type: object
-  *             properties:
-  *               PatientId:
-  *                 type: integer
-  *               ImageName:
-  *                 type: string
-  *                 description: Name of the image with extension
-  *               Description:
-  *                 type: string
-  *                 description: Description of the image
-  *               Stream:
-  *                 type: string
-  *                 description: Base64 encoded image
-  *     security:
-  *       - bearerAuth: []
-  *     responses:
-  *       200:
-  *         description: Patient created successfully
-  *       400:
-  *         description: Bad request
-  *       500:
-  *         description: Internal server error
-  */
+ * @swagger
+ * /uploadDocumentWD:
+ *   post:
+ *     summary: Upload a document for a patient
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               PatientId:
+ *                 type: integer
+ *               ImageName:
+ *                 type: string
+ *                 description: Name of the image with extension
+ *               Description:
+ *                 type: string
+ *                 description: Description of the image
+ *               Stream:
+ *                 type: string
+ *                 description: Base64 encoded image
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Patient created successfully
+ *       400:
+ *         description: Bad request
+ *       500:
+ *         description: Internal server error
+ */
 app.post("uploadDocumentWD", async (req, res) => {
   if (!req.body) {
     res.status(400).send("Missing body");
@@ -1611,17 +1690,21 @@ app.post("uploadDocumentWD", async (req, res) => {
     return;
   }
   try {
-    const response = await axios.post(baseWD + "/api/ZapierIntegration/UploadDocument", {
-      params: req.body,
-      headers: {
-        Authorization: req.headers.authorization,
-        'Content-Type': 'application/json'
+    const response = await axios.post(
+      baseWD + "/api/ZapierIntegration/UploadDocument",
+      {
+        params: req.body,
+        headers: {
+          Authorization: req.headers.authorization,
+          "Content-Type": "application/json",
+        },
       }
-    });
+    );
     res.send(response.data);
   } catch (error) {
-    res.status(error.response ?  error.response.status
-      : 500).send(error.message);
+    res
+      .status(error.response ? error.response.status : 500)
+      .send(error.message);
   }
 });
 
