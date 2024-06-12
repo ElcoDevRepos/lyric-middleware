@@ -949,6 +949,7 @@ app.get("/states", async (req, res) => {
  * /providers:
  *   get:
  *     summary: Retrieve provider availability
+ *     tags: [Providers]
  *     description: This endpoint retrieves the availability of providers based on the provided criteria.
  *     parameters:
  *       - in: query
