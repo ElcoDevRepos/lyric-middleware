@@ -2,6 +2,7 @@ const express = require("express");
 const axios = require("axios");
 const qs = require("qs");
 const auth = require("basic-auth");
+const fs = require("fs");
 
 var bodyParser = require("body-parser");
 const swaggerUi = require("swagger-ui-express");
@@ -133,7 +134,6 @@ async function getCensusAdminToken() {
 }
 
 async function getWebDoctorsToken(username, password) {
-  console.log(username, password);
   let data = qs.stringify({
     username: username,
     password: password,
@@ -150,7 +150,6 @@ async function getWebDoctorsToken(username, password) {
     data: data,
   };
   const response = await axios.request(config);
-  console.log("ACCESS TOKEN!!!");
   return response.data;
 }
 
@@ -278,27 +277,50 @@ async function createConsultationHelper(req, accessToken) {
   return axios(config);
 }
 
-async function addAttachmentHelper(req, accessToken) {
+async function addAttachmentHelper(req, accessToken, shouldUseWebDoctors) {
   if (!req) throw new Error("Request is required");
   if (!accessToken) {
     accessToken = await getCensusAdminToken();
   }
 
-  var data = new FormData();
-  const blob = new Blob([req.file.buffer], { type: req.file.mimetype });
-  // We use buffer and originalname since the file is stored in memory
-  data.append("AttachmentFile", blob, req.file.originalname);
+  if (shouldUseWebDoctors) {
+    // Assuming req.file.buffer is the buffer of the uploaded file
+    const bdata = req.file.buffer.toString("base64");
+    const data = JSON.stringify({
+      Stream: bdata,
+      ImageName: req.file.originalname,
+      Description: "",
+      PatientId: parseInt(req.body.userId),
+    });
+    let config = {
+      method: "post",
+      maxBodyLength: Infinity,
+      url: baseWD + "/api/Reason/UploadDocument",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + accessToken,
+      },
+      data: data,
+    };
 
-  var config = {
-    method: "post",
-    maxBodyLength: Infinity,
-    url: base + "/attachment/add/" + req.body.userId,
-    headers: {
-      Authorization: "Bearer " + accessToken,
-    },
-    data: data,
-  };
-  return axios(config);
+    return axios.request(config);
+  } else {
+    var data = new FormData();
+    const blob = new Blob([req.file.buffer], { type: req.file.mimetype });
+    // We use buffer and originalname since the file is stored in memory
+    data.append("AttachmentFile", blob, req.file.originalname);
+
+    var config = {
+      method: "post",
+      maxBodyLength: Infinity,
+      url: base + "/attachment/add/" + req.body.userId,
+      headers: {
+        Authorization: "Bearer " + accessToken,
+      },
+      data: data,
+    };
+    return axios(config);
+  }
 }
 
 /* 1-1 with https://docs.getlyric.com/#8537a622-8775-4d83-8192-75944d8b847c */
@@ -1109,6 +1131,16 @@ app.get("/pharmacies", async (req, res) => {
  *         type: string
  *         description: ID of the user to add the attachment for.
  *         required: true
+ *       - in: formData
+ *         name: email
+ *         type: string
+ *         description: email of the user you want to add the attachment for.
+ *         required: true
+ *       - in: formData
+ *         name: password
+ *         type: string
+ *         description: password of the user you want to add the attachment for.
+ *         required: true
  *     responses:
  *       200:
  *         description: Attachment added successfully
@@ -1124,23 +1156,41 @@ app.get("/pharmacies", async (req, res) => {
  *       500:
  *         description: Something went wrong
  */
-app.post("/addAttachment", upload.none(), async (req, res, next) => {
-  // req.file is the 'AttachmentFile' file
-  // req.body will hold the text fields, if there were any
+app.post(
+  "/addAttachment",
+  upload.single("AttachmentFile"),
+  async (req, res, next) => {
+    // req.file is the 'AttachmentFile' file
+    // req.body will hold the text fields, if there were any
+    const shouldUseWebDoctors = true;
+    console.log("HERE");
+    if (!req.file) {
+      return res.status(400).send("No file uploaded.");
+    }
 
-  if (!req.file) {
-    return res.status(400).send("No file uploaded.");
+    try {
+      let accessToken = "";
+      if (shouldUseWebDoctors) {
+        accessToken = await getWebDoctorsToken(
+          req.body.email,
+          req.body.password
+        );
+        accessToken = accessToken.access_token;
+      } else {
+        accessToken = await getCensusAdminToken();
+      }
+      /* Broke most out into a helper function for reuse */
+      const response = await addAttachmentHelper(
+        req,
+        accessToken,
+        shouldUseWebDoctors
+      );
+      res.send(response.data);
+    } catch (error) {
+      res.status(500).send(error.message);
+    }
   }
-
-  try {
-    let accessToken = await getCensusAdminToken();
-    /* Broke most out into a helper function for reuse */
-    const response = await addAttachmentHelper(req, accessToken);
-    res.send(response.data);
-  } catch (error) {
-    res.status(500).send(error.message);
-  }
-});
+);
 
 /**
  * @swagger
