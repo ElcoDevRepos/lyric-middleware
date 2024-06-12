@@ -1573,53 +1573,6 @@ app.post("/reorder", upload.single("AttachmentFile"), async (req, res) => {
   }
 });
 
-/**
- * @swagger
- * /tokenWD:
- *   get:
- *     summary: Obtain an authentication token
- *     parameters:
- *       - name: username
- *         in: body
- *         type: string
- *         required: true
- *         description: User's email address
- *       - name: password
- *         in: body
- *         type: string
- *         required: true
- *         description: User's password
- *       - name: grant_type
- *         in: body
- *         type: string
- *         required: true
- *         description: Grant type
- *         example: password
- *     responses:
- *       200:
- *         description: Token retrieved successfully
- *       400:
- *         description: Bad request
- *       500:
- *         description: Internal server error
- */
-app.get("tokenWD", async (req, res) => {
-  if (!req.body) {
-    res.status(400).send("Missing body");
-    return;
-  }
-  try {
-    const response = await axios.get(baseWD + "/Token", {
-      params: req.body,
-    });
-    res.send(response.data);
-  } catch (error) {
-    res
-      .status(error.response ? error.response.status : 500)
-      .send(error.message);
-  }
-});
-
 app.listen(PORT, () => {
   console.log(`Server is running on ${PORT}`);
 });
