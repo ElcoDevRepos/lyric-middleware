@@ -1164,7 +1164,6 @@ app.post(
     // req.file is the 'AttachmentFile' file
     // req.body will hold the text fields, if there were any
     const shouldUseWebDoctors = true;
-    console.log("HERE");
     if (!req.file) {
       return res.status(400).send("No file uploaded.");
     }
