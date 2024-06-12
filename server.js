@@ -134,23 +134,33 @@ async function getCensusAdminToken() {
 }
 
 async function getWebDoctorsToken(username, password) {
-  let data = qs.stringify({
-    username: username,
-    password: password,
-    grant_type: "password",
-  });
+  try {
+    let data = qs.stringify({
+      username:
+        process.env.ENVIRONMENT == "staging"
+          ? "rahulupreti01@mailinator.com"
+          : "steve@mdvirtualcare.com",
+      password:
+        process.env.ENVIRONMENT == "staging"
+          ? "Password@12345"
+          : "100Gateway864!",
+      grant_type: "password",
+    });
 
-  let config = {
-    method: "get",
-    maxBodyLength: Infinity,
-    url: baseWD + "/Token",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    data: data,
-  };
-  const response = await axios.request(config);
-  return response.data;
+    let config = {
+      method: "get",
+      maxBodyLength: Infinity,
+      url: baseWD + "/Token",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      data: data,
+    };
+    const response = await axios.request(config);
+    return response.data;
+  } catch (error) {
+    console.log(error);
+  }
 }
 
 async function createMemberHelper(req, accessToken, isWebDoctors = false) {
@@ -764,7 +774,6 @@ app.post("/newConsultationWithType", async (req, res) => {
             consult_time_zone: "America/Chicago",
           };
         }
-        console.log(patientRecords.patient.profile);
         const patientPayload = {
           patient: {
             user_id: userId,
@@ -1131,16 +1140,6 @@ app.get("/pharmacies", async (req, res) => {
  *         name: userId
  *         type: string
  *         description: ID of the user to add the attachment for.
- *         required: true
- *       - in: formData
- *         name: email
- *         type: string
- *         description: email of the user you want to add the attachment for.
- *         required: true
- *       - in: formData
- *         name: password
- *         type: string
- *         description: password of the user you want to add the attachment for.
  *         required: true
  *     responses:
  *       200:
