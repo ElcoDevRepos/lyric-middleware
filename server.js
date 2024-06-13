@@ -40,7 +40,7 @@ const base =
 const baseWD =
   process.env.ENVIRONMENT == "staging"
     ? "https://stgwbclientapi.azurewebsites.net"
-    : "";
+    : "https://wbclientapi.webdoctors.com";
 
 // Middleware to handle JSON requests
 app.use(express.json());
