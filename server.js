@@ -44,6 +44,15 @@ const baseWD =
 // Middleware to handle JSON requests
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+/* We'll have to add CORS headers to response. Not sure what
+ * we should make it. I've been using this for testing
+app.use(function(req, res, next) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST');
+  res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,content-type, Authorization');
+  next();
+});
+*/
 const authMiddleware = (req, res, next) => {
   const user = auth(req);
 
@@ -58,6 +67,31 @@ const authMiddleware = (req, res, next) => {
   return next();
 };
 
+/**
+  * @swagger
+  * /login/lyric:
+  *   post:
+  *     summary: Patient login
+  *     requestBody:
+  *       required: true
+  *       content:
+  *         application/json:
+  *           schema:
+  *             type: object
+  *             properties:
+  *               email:
+  *                 type: string
+  *                 example: example123@example.com
+  *               password:
+  *                 type: string
+  *     responses:
+  *       200:
+  *         description: Patient created successfully
+  *       400:
+  *         description: Bad request. The email or password are not in the request body.
+  *       500:
+  *         description: Internal server error
+  */
 async function login(email, password) {
   var data = new FormData();
   data.append("email", email);
@@ -70,6 +104,42 @@ async function login(email, password) {
   };
   return axios(config);
 }
+
+app.post("/login/lyric", async (req, res) => {
+  if (!req.body ||
+      !req.body.email ||
+      !req.body.password) {
+    res.status(400).send("Missing required fields email and/or password");
+  }
+  try {
+    const responseLogin = await login(req.body.email, req.body.password);
+    if (responseLogin.data.success) {
+      var token = responseLogin.headers.authorization;
+      config = {
+        method: "get",
+        maxBodyLength: Infinity,
+        url: base + "/memberAccount/getFullAccountInfo",
+        headers: {
+          Authorization: token,
+        },
+      }
+      responseUserInfo = await axios(config);
+      if (responseUserInfo.data.success) {
+        res.send({
+          login: responseLogin.data,
+          userInfo: responseUserInfo.data
+        });
+      } else {
+        res.status(400).send(responseUserInfo.data.message);
+      }
+    } else {
+      res.status(400).send(response.data.message);
+    }
+  } catch (error) {
+    res.status(500).send("Something went wrong");
+  }
+});
+
 async function getSSOAPIToken(memberExternalId, groupCode) {
   try {
     let creds = {
@@ -156,6 +226,7 @@ async function createMemberHelper(req, accessToken) {
     address2: req.body.address2,
     state: req.body.state,
     zip: req.body.zip,
+    city: req.body.city,
   };
 
   var data = new FormData();
@@ -1248,9 +1319,15 @@ app.post("/problems", async (req, res) => {
  */
 app.get("/timezones", async (req, res) => {
   try {
+    let memberExternalId = req.query.memberExternalId;
+    let groupCode = req.query.groupCode;
+    if (!memberExternalId || !groupCode) {
+      memberExternalId = req.body.memberExternalId;
+      groupCode = req.body.groupCode;
+    }
     let accessToken = await getSSOAPIToken(
-      req.body.memberExternalId,
-      req.body.groupCode
+      memberExternalId,
+      groupCode
     );
     var config = {
       method: "get",
