@@ -176,7 +176,7 @@ async function createMemberHelper(req, accessToken, isWebDoctors = false) {
     if (!city) {
       city = await getCityName(req.body.zip);
     }
-    conosole.log("CITY HERE!");
+    console.log("CITY HERE!");
     console.log(city);
     member = {
       ID: 0,
