@@ -539,8 +539,10 @@ app.post("/login/lyric", async (req, res) => {
  *         description: Something went wrong
  */
 app.post("/createMember", upload.none(), async (req, res) => {
-  const shouldUseWebDoctors = true;
-
+  let shouldUseWebDoctors = true;
+  if (req.body.bypassWD) {
+    shouldUseWebDoctors = req.body.bypassWD;
+  }
   try {
     let accessToken = "";
     if (shouldUseWebDoctors) {
