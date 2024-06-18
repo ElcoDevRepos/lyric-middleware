@@ -45,6 +45,15 @@ const baseWD =
 // Middleware to handle JSON requests
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(function (req, res, next) {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST");
+  res.setHeader(
+    "Access-Control-Allow-Headers",
+    "X-Requested-With,content-type, Authorization"
+  );
+  next();
+});
 const authMiddleware = (req, res, next) => {
   const user = auth(req);
 
@@ -170,7 +179,7 @@ async function createMemberHelper(req, accessToken, isWebDoctors = false) {
   }
   let member = {};
   var data = new FormData();
-  
+
   if (isWebDoctors) {
     let city = req.body.city;
     if (!city) {
@@ -224,6 +233,7 @@ async function createMemberHelper(req, accessToken, isWebDoctors = false) {
       address2: req.body.address2,
       state: req.body.state,
       zip: req.body.zip,
+      city: req.body.city,
     };
     data.append("primaryExternalId", member.memberExternalId);
     data.append("groupCode", member.groupCode);
@@ -415,6 +425,64 @@ app.use(
   swaggerUi.serve,
   swaggerUi.setup(swaggerSpec)
 );
+
+/**
+ * @swagger
+ * /login/lyric:
+ *   post:
+ *     summary: Patient login
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 example: example123@example.com
+ *               password:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Patient created successfully
+ *       400:
+ *         description: Bad request. The email or password are not in the request body.
+ *       500:
+ *         description: Internal server error
+ */
+app.post("/login/lyric", async (req, res) => {
+  if (!req.body || !req.body.email || !req.body.password) {
+    res.status(400).send("Missing required fields email and/or password");
+  }
+  try {
+    const responseLogin = await login(req.body.email, req.body.password);
+    if (responseLogin.data.success) {
+      var token = responseLogin.headers.authorization;
+      config = {
+        method: "get",
+        maxBodyLength: Infinity,
+        url: base + "/memberAccount/getFullAccountInfo",
+        headers: {
+          Authorization: token,
+        },
+      };
+      responseUserInfo = await axios(config);
+      if (responseUserInfo.data.success) {
+        res.send({
+          login: responseLogin.data,
+          userInfo: responseUserInfo.data,
+        });
+      } else {
+        res.status(400).send(responseUserInfo.data.message);
+      }
+    } else {
+      res.status(400).send(response.data.message);
+    }
+  } catch (error) {
+    res.status(500).send("Something went wrong");
+  }
+});
 
 /**
  * @swagger
@@ -1379,10 +1447,13 @@ app.post("/problems", async (req, res) => {
  */
 app.get("/timezones", async (req, res) => {
   try {
-    let accessToken = await getSSOAPIToken(
-      req.body.memberExternalId,
-      req.body.groupCode
-    );
+    let memberExternalId = req.query.memberExternalId;
+    let groupCode = req.query.groupCode;
+    if (!memberExternalId || !groupCode) {
+      memberExternalId = req.body.memberExternalId;
+      groupCode = req.body.groupCode;
+    }
+    let accessToken = await getSSOAPIToken(memberExternalId, groupCode);
     var config = {
       method: "get",
       maxBodyLength: Infinity,
@@ -1581,39 +1652,39 @@ app.post("/reorder", upload.single("AttachmentFile"), async (req, res) => {
 
 async function getCityName(zipCode) {
   console.log(zipCode);
-    const apiKey = 'AIzaSyCEMmNnlgzp6-Q6XtpE6RfWZNUtpCdU3ZY';
-    const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${zipCode}&key=${apiKey}`;
+  const apiKey = "AIzaSyCEMmNnlgzp6-Q6XtpE6RfWZNUtpCdU3ZY";
+  const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${zipCode}&key=${apiKey}`;
 
-    try {
-        const response = await fetch(url);
-        if (!response.ok) {
-            throw new Error('Network response was not ok');
-        }
-        const data = await response.json();
-        if (data.status !== 'OK') {
-            throw new Error('Error with geocoding API: ' + data.status);
-        }
-
-        const results = data.results;
-        if (results.length === 0) {
-            throw new Error('No results found');
-        }
-
-        const addressComponents = results[0].address_components;
-        const cityComponent = addressComponents.find(component =>
-            component.types.includes('locality')
-        );
-
-        if (!cityComponent) {
-            throw new Error('City not found in address components');
-        }
-
-        return cityComponent.long_name;
-    } catch (error) {
-        console.error('Error fetching city name:', error);
-        throw error;
-        return error;
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error("Network response was not ok");
     }
+    const data = await response.json();
+    if (data.status !== "OK") {
+      throw new Error("Error with geocoding API: " + data.status);
+    }
+
+    const results = data.results;
+    if (results.length === 0) {
+      throw new Error("No results found");
+    }
+
+    const addressComponents = results[0].address_components;
+    const cityComponent = addressComponents.find((component) =>
+      component.types.includes("locality")
+    );
+
+    if (!cityComponent) {
+      throw new Error("City not found in address components");
+    }
+
+    return cityComponent.long_name;
+  } catch (error) {
+    console.error("Error fetching city name:", error);
+    throw error;
+    return error;
+  }
 }
 
 app.listen(PORT, () => {
