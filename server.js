@@ -170,8 +170,12 @@ async function createMemberHelper(req, accessToken, isWebDoctors = false) {
   }
   let member = {};
   var data = new FormData();
-
+  
   if (isWebDoctors) {
+    let city = req.body.city;
+    if (!city) {
+      city = await getCityName(req.body.zip);
+    }
     member = {
       ID: 0,
       FirstName: req.body.firstName,
@@ -183,7 +187,7 @@ async function createMemberHelper(req, accessToken, isWebDoctors = false) {
       PhoneNo: req.body.phone,
       Address1: req.body.address,
       Address2: req.body.address2,
-      City: req.body.city,
+      City: city,
       Zipcode: req.body.zip,
     };
     let config = {
@@ -1571,6 +1575,41 @@ app.post("/reorder", upload.single("AttachmentFile"), async (req, res) => {
     res.status(500).send(finalResponse);
   }
 });
+
+async function getCityName(zipCode) {
+    const apiKey = 'AIzaSyCEMmNnlgzp6-Q6XtpE6RfWZNUtpCdU3ZY';
+    const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${zipCode}&key=${apiKey}`;
+
+    try {
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        const data = await response.json();
+        if (data.status !== 'OK') {
+            throw new Error('Error with geocoding API: ' + data.status);
+        }
+
+        const results = data.results;
+        if (results.length === 0) {
+            throw new Error('No results found');
+        }
+
+        const addressComponents = results[0].address_components;
+        const cityComponent = addressComponents.find(component =>
+            component.types.includes('locality')
+        );
+
+        if (!cityComponent) {
+            throw new Error('City not found in address components');
+        }
+
+        return cityComponent.long_name;
+    } catch (error) {
+        console.error('Error fetching city name:', error);
+        throw error;
+    }
+}
 
 app.listen(PORT, () => {
   console.log(`Server is running on ${PORT}`);
