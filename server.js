@@ -174,7 +174,7 @@ async function createMemberHelper(req, accessToken, isWebDoctors = false) {
   if (isWebDoctors) {
     let city = req.body.city;
     if (!city) {
-      //city = await getCityName(req.body.zip);
+      city = await getCityName(req.body.zip);
     }
     member = {
       ID: 0,
