@@ -176,6 +176,8 @@ async function createMemberHelper(req, accessToken, isWebDoctors = false) {
     if (!city) {
       city = await getCityName(req.body.zip);
     }
+    conosole.log("CITY HERE!");
+    console.log(city);
     member = {
       ID: 0,
       FirstName: req.body.firstName,
@@ -1577,6 +1579,7 @@ app.post("/reorder", upload.single("AttachmentFile"), async (req, res) => {
 });
 
 async function getCityName(zipCode) {
+  console.log(zipCode);
     const apiKey = 'AIzaSyCEMmNnlgzp6-Q6XtpE6RfWZNUtpCdU3ZY';
     const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${zipCode}&key=${apiKey}`;
 
@@ -1608,6 +1611,7 @@ async function getCityName(zipCode) {
     } catch (error) {
         console.error('Error fetching city name:', error);
         throw error;
+        return error;
     }
 }
 
