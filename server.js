@@ -84,11 +84,11 @@ async function getSSOAPIToken(memberExternalId, groupCode) {
   try {
     let creds = {
       email:
-        process.env.ENVIRONMENT != "staging"
+        process.env.ENVIRONMENT == "staging"
           ? "MTMMDVC01SSO@mytelemedicine.com"
           : "MTMAIM01SSO@mytelemedicine.com",
       password:
-        process.env.ENVIRONMENT != "staging"
+        process.env.ENVIRONMENT == "staging"
           ? ")7(M9V@dW13@1n8AZa6K"
           : "CdGt{[1qIQ,+[xZZ@K3Q",
     };
