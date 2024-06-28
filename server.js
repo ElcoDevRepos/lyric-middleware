@@ -38,9 +38,9 @@ const base =
     ? "https://staging.getlyric.com/go/api"
     : "https://portal.getlyric.com/go/api";
 const baseWD =
-  process.env.ENVIRONMENT == "staging"
+  process.env.ENVIRONMENT != "staging"
     ? "https://stgwbclientapi.azurewebsites.net"
-    : "https://wbclientapi.webdoctors.com";
+    : "https://wbclientapi.webdoctors.com"; // FLIP THIS BEFORE LIVE PROD PUSH!
 
 // Middleware to handle JSON requests
 app.use(express.json());
@@ -146,11 +146,11 @@ async function getWebDoctorsToken(username, password) {
   try {
     let data = qs.stringify({
       username:
-        process.env.ENVIRONMENT == "staging"
+        process.env.ENVIRONMENT != "staging"
           ? "rahulupreti01@mailinator.com"
           : "steve@mdvirtualcare.com",
       password:
-        process.env.ENVIRONMENT == "staging"
+        process.env.ENVIRONMENT != "staging"
           ? "Password@12345"
           : "100Gateway864!",
       grant_type: "password",
