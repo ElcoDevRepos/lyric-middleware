@@ -42,6 +42,8 @@ const baseWD =
     ? "https://stgwbclientapi.azurewebsites.net"
     : "https://wbclientapi.webdoctors.com"; // FLIP THIS BEFORE LIVE PROD PUSH!
 
+const wdVendorId = process.env.ENVIRONMENT == "staging" ? 15 : 15; // staging is 35
+
 // Middleware to handle JSON requests
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -193,7 +195,7 @@ async function createMemberHelper(req, accessToken, isWebDoctors = false) {
       FirstName: req.body.firstName,
       LastName: req.body.lastName,
       Email: req.body.email,
-      VendorId: 35,
+      VendorId: wdVendorId,
       Gender: req.body.gender,
       DateOfBirth: req.body.dateOfBirth,
       PhoneNo: req.body.phone,
