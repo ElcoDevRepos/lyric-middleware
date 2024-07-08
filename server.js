@@ -175,98 +175,103 @@ async function getWebDoctorsToken(username, password) {
 }
 
 async function createMemberHelper(req, accessToken, isWebDoctors = false) {
-  if (!req) throw new Error("Request is required");
-  if (!accessToken) {
-    accessToken = await getCensusAdminToken();
-  }
-  let member = {};
-  var data = new FormData();
-
-  if (isWebDoctors) {
-    let city = req.body.city;
-    if (!city) {
-      city = await getCityName(req.body.zip);
-      city = city.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "");
+  try {
+    if (!req) throw new Error("Request is required");
+    if (!accessToken) {
+      accessToken = await getCensusAdminToken();
     }
-    console.log("CITY HERE!");
-    console.log(city);
-    member = {
-      ID: 0,
-      FirstName: req.body.firstName,
-      LastName: req.body.lastName,
-      Email: req.body.email,
-      VendorId: wdVendorId,
-      Gender: req.body.gender,
-      DateOfBirth: req.body.dateOfBirth,
-      PhoneNo: req.body.phone,
-      Address1: req.body.address,
-      Address2: req.body.address2,
-      City: city,
-      Zipcode: req.body.zip,
-    };
-    let config = {
-      method: "post",
-      maxBodyLength: Infinity,
-      url: baseWD + "/api/ZapierIntegration/CreateMember",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      data: JSON.stringify(member),
-    };
+    let member = {};
+    var data = new FormData();
 
-    return axios.request(config);
-  } else {
-    member = {
-      firstName: req.body.firstName,
-      lastName: req.body.lastName,
-      dob: req.body.dateOfBirth,
-      gender: req.body.gender,
-      memberExternalId: req.body.memberExternalId,
-      state: req.body.state,
-      groupCode: req.body.groupCode,
-      planId: req.body.planId,
-      planDetailsId: req.body.planDetailsId,
-      heightFeet: req.body.heightFeet,
-      heightInches: req.body.heightInches,
-      weight: req.body.weight,
-      email: req.body.email,
-      phone: req.body.phone,
-      address: req.body.address,
-      address2: req.body.address2,
-      state: req.body.state,
-      zip: req.body.zip,
-      city: req.body.city,
-    };
-    data.append("primaryExternalId", member.memberExternalId);
-    data.append("groupCode", member.groupCode);
-    data.append("planId", member.planId);
-    data.append("planDetailsId", member.planDetailsId);
-    data.append("firstName", member.firstName);
-    data.append("lastName", member.lastName);
-    data.append("dob", member.dob);
-    data.append("gender", member.gender);
-    data.append("email", member.email);
-    data.append("primaryPhone", member.phone);
-    data.append("heightFeet", member.heightFeet);
-    data.append("heightInches", member.heightInches);
-    data.append("weight", member.weight);
-    data.append("address", member.address);
-    data.append("address2", member.address2);
-    data.append("city", member.city);
-    data.append("stateId", member.state);
-    data.append("timezoneId", "");
-    data.append("zipCode", member.zip);
-    var config = {
-      method: "post",
-      maxBodyLength: Infinity,
-      url: base + "/census/createMember",
-      headers: {
-        Authorization: "Bearer " + accessToken,
-      },
-      data: data,
-    };
+    if (isWebDoctors) {
+      let city = req.body.city;
+      if (!city) {
+        city = await getCityName(req.body.zip);
+        city = city.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "");
+      }
+      console.log("CITY HERE!");
+      console.log(city);
+      member = {
+        ID: 0,
+        FirstName: req.body.firstName,
+        LastName: req.body.lastName,
+        Email: req.body.email,
+        VendorId: wdVendorId,
+        Gender: req.body.gender,
+        DateOfBirth: req.body.dateOfBirth,
+        PhoneNo: req.body.phone,
+        Address1: req.body.address,
+        Address2: req.body.address2,
+        City: city,
+        Zipcode: req.body.zip,
+      };
+      let config = {
+        method: "post",
+        maxBodyLength: Infinity,
+        url: baseWD + "/api/ZapierIntegration/CreateMember",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        data: JSON.stringify(member),
+      };
 
-    return axios(config);
+      return axios.request(config);
+    } else {
+      member = {
+        firstName: req.body.firstName,
+        lastName: req.body.lastName,
+        dob: req.body.dateOfBirth,
+        gender: req.body.gender,
+        memberExternalId: req.body.memberExternalId,
+        state: req.body.state,
+        groupCode: req.body.groupCode,
+        planId: req.body.planId,
+        planDetailsId: req.body.planDetailsId,
+        heightFeet: req.body.heightFeet,
+        heightInches: req.body.heightInches,
+        weight: req.body.weight,
+        email: req.body.email,
+        phone: req.body.phone,
+        address: req.body.address,
+        address2: req.body.address2,
+        state: req.body.state,
+        zip: req.body.zip,
+        city: req.body.city,
+      };
+      data.append("primaryExternalId", member.memberExternalId);
+      data.append("groupCode", member.groupCode);
+      data.append("planId", member.planId);
+      data.append("planDetailsId", member.planDetailsId);
+      data.append("firstName", member.firstName);
+      data.append("lastName", member.lastName);
+      data.append("dob", member.dob);
+      data.append("gender", member.gender);
+      data.append("email", member.email);
+      data.append("primaryPhone", member.phone);
+      data.append("heightFeet", member.heightFeet);
+      data.append("heightInches", member.heightInches);
+      data.append("weight", member.weight);
+      data.append("address", member.address);
+      data.append("address2", member.address2);
+      data.append("city", member.city);
+      data.append("stateId", member.state);
+      data.append("timezoneId", "");
+      data.append("zipCode", member.zip);
+      var config = {
+        method: "post",
+        maxBodyLength: Infinity,
+        url: base + "/census/createMember",
+        headers: {
+          Authorization: "Bearer " + accessToken,
+        },
+        data: data,
+      };
+
+      return axios(config);
+    }
+  } catch (error) {
+    console.log(error);
+    throw new Error("Error creating member: " + error);
   }
 }
 
