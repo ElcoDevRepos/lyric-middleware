@@ -547,9 +547,7 @@ app.post("/login/lyric", async (req, res) => {
  */
 app.post("/createMember", upload.none(), async (req, res) => {
   let shouldUseWebDoctors = true;
-  if (req.body.bypassWD) {
-    shouldUseWebDoctors = false;
-  }
+
   try {
     let accessToken = "";
     if (shouldUseWebDoctors) {
