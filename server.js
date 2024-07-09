@@ -40,7 +40,7 @@ const base =
 const baseWD =
   process.env.ENVIRONMENT == "staging"
     ? "https://stgwbclientapi.azurewebsites.net"
-    : "https://wbclientapi.webdoctors.com"; // FLIP THIS BEFORE LIVE PROD PUSH!
+    : "https://wbclientapi.webdoctors.com";
 
 const wdVendorId = process.env.ENVIRONMENT == "staging" ? 35 : 15; // staging is 35
 
@@ -564,6 +564,7 @@ app.post("/createMember", upload.none(), async (req, res) => {
       shouldUseWebDoctors
     );
     if (shouldUseWebDoctors) {
+      console.log(response);
       if (response.data) {
         if (response.data.Message) {
           res.send(response.data.Message);
@@ -578,6 +579,7 @@ app.post("/createMember", upload.none(), async (req, res) => {
       res.send(response.data.message);
     }
   } catch (error) {
+    console.log(error);
     if (shouldUseWebDoctors) {
       res.send(error.response.data.Message);
     } else {
