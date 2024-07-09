@@ -38,11 +38,11 @@ const base =
     ? "https://staging.getlyric.com/go/api"
     : "https://portal.getlyric.com/go/api";
 const baseWD =
-  process.env.ENVIRONMENT != "staging"
+  process.env.ENVIRONMENT == "staging"
     ? "https://stgwbclientapi.azurewebsites.net"
     : "https://wbclientapi.webdoctors.com"; // FLIP THIS BEFORE LIVE PROD PUSH!
 
-const wdVendorId = process.env.ENVIRONMENT == "staging" ? 15 : 15; // staging is 35
+const wdVendorId = process.env.ENVIRONMENT == "staging" ? 35 : 15; // staging is 35
 
 // Middleware to handle JSON requests
 app.use(express.json());
@@ -1660,7 +1660,6 @@ app.post("/reorder", upload.single("AttachmentFile"), async (req, res) => {
 });
 
 async function getCityName(zipCode) {
-  console.log(zipCode);
   const apiKey = "AIzaSyCEMmNnlgzp6-Q6XtpE6RfWZNUtpCdU3ZY";
   const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${zipCode}&key=${apiKey}`;
 
