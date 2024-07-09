@@ -148,11 +148,11 @@ async function getWebDoctorsToken(username, password) {
   try {
     let data = qs.stringify({
       username:
-        process.env.ENVIRONMENT != "staging"
+        process.env.ENVIRONMENT == "staging"
           ? "rahulupreti01@mailinator.com"
           : "steve@mdvirtualcare.com",
       password:
-        process.env.ENVIRONMENT != "staging"
+        process.env.ENVIRONMENT == "staging"
           ? "Password@12345"
           : "100Gateway864!",
       grant_type: "password",
@@ -178,7 +178,7 @@ async function createMemberHelper(req, accessToken, isWebDoctors = false) {
   try {
     if (!req) throw new Error("Request is required");
     if (!accessToken) {
-      accessToken = await getCensusAdminToken();
+      // accessToken = await getCensusAdminToken();
     }
     let member = {};
     var data = new FormData();
@@ -314,7 +314,7 @@ async function createConsultationHelper(req, accessToken) {
 async function addAttachmentHelper(req, accessToken, shouldUseWebDoctors) {
   if (!req) throw new Error("Request is required");
   if (!accessToken) {
-    accessToken = await getCensusAdminToken();
+    // accessToken = await getCensusAdminToken();
   }
 
   if (shouldUseWebDoctors) {
@@ -554,7 +554,7 @@ app.post("/createMember", upload.none(), async (req, res) => {
       //accessToken = await getWebDoctorsToken(req.body.email, req.body.password);
       //accessToken = accessToken.access_token;
     } else {
-      accessToken = await getCensusAdminToken();
+      //accessToken = await getCensusAdminToken();
     }
 
     /* Broke most out into a helper function for reuse */
