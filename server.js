@@ -205,6 +205,7 @@ async function createMemberHelper(req, accessToken, isWebDoctors = false) {
         City: city,
         Zipcode: req.body.zip,
       };
+      console.log("MEMBER!");
       console.log(member);
       let config = {
         method: "post",
