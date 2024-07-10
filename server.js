@@ -569,9 +569,15 @@ app.post("/createMember", upload.none(), async (req, res) => {
       console.log(response);
       if (response.data) {
         if (response.data.Message) {
-          res.send(response.data.Message);
+          res.send({
+            success: false,
+            message: response.data.Message,
+          });
         } else {
-          res.send(response.data.toString()); // returns an ID
+          res.send({
+            success: true,
+            userid: response.data.toString(),
+          }); // returns an ID
         }
       }
     }
