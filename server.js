@@ -191,6 +191,7 @@ async function createMemberHelper(req, accessToken, isWebDoctors = false) {
       }
       console.log("CITY HERE!");
       console.log(city);
+
       member = {
         ID: 0,
         FirstName: req.body.firstName,
@@ -205,6 +206,8 @@ async function createMemberHelper(req, accessToken, isWebDoctors = false) {
         City: city,
         Zipcode: req.body.zip,
       };
+      member.FirstName = req.body.firstName.replace(/[-\s]/g, "");
+      member.LastName = req.body.lastName.replace(/[-\s]/g, "");
       console.log("MEMBER!");
       console.log(member);
       let config = {
