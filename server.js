@@ -185,10 +185,16 @@ async function createMemberHelper(req, accessToken, isWebDoctors = false) {
 
     if (isWebDoctors) {
       let city = req.body.city;
-      if (!city) {
-        city = await getCityName(req.body.zip);
-        city = city.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "");
+      let zip;
+      if (req.body.zip) {
+        zip = req.body.zip.split("-")[0]:
       }
+      if (!city && zip) {
+        city = await getCityName(zip);
+        city = city.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "");
+      } else {
+        throw new Error("invalid city or zip");
+        }
       console.log("CITY HERE!");
       console.log(city);
 
