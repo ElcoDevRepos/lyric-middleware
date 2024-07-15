@@ -185,7 +185,7 @@ async function createMemberHelper(req, accessToken, isWebDoctors = false) {
 
     if (isWebDoctors) {
       let city = req.body.city;
-      let zip;
+      let zip = "";
       if (req.body.zip) {
         zip = req.body.zip.split("-")[0]:
       }
