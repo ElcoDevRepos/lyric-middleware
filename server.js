@@ -210,7 +210,7 @@ async function createMemberHelper(req, accessToken, isWebDoctors = false) {
         Address1: req.body.address,
         Address2: req.body.address2,
         City: city,
-        Zipcode: req.body.zip,
+        Zipcode: zip,
       };
       member.FirstName = req.body.firstName.replace(/[-\s]/g, "");
       member.LastName = req.body.lastName.replace(/[-\s]/g, "");
