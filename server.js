@@ -1223,7 +1223,6 @@ app.get("/pharmacies", async (req, res) => {
         headers: {
           Authorization: "Bearer " + accessToken,
         },
-        data: new FormData(),
       };
 
       const response = await axios(config);
