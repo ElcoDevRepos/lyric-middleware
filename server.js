@@ -1401,7 +1401,7 @@ app.post("/setPreferredPharmacy", async (req, res) => {
       const response = await axios.request(config);
       console.log(response);
       if (response.data) {
-        res.send(response.data.success);
+        res.send(response.data);
       } else {
         res.send(response.data.message);
       }
