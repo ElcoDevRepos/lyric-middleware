@@ -1215,7 +1215,7 @@ app.get("/pharmacies", async (req, res) => {
           "&state=" +
           state +
           "&distance=" +
-          (distance || 30) +
+          (distance || 2) +
           "&type=" +
           (type || 1) +
           "&zip=" +
@@ -1225,7 +1225,7 @@ app.get("/pharmacies", async (req, res) => {
         },
       };
 
-      const response = await axios(config);
+      const response = await axios.request(config);
 
       res.send(response.data);
     } else {
