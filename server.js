@@ -1393,6 +1393,7 @@ app.post("/setPreferredPharmacy", async (req, res) => {
         url: baseWD + "/api/Patient/AddPreferredPharmacy",
         headers: {
           Authorization: "Bearer " + accessToken,
+          "Content-Type": "application/json",
         },
         data: data,
       };
