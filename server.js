@@ -144,7 +144,7 @@ async function getCensusAdminToken() {
   return null;
 }
 
-async function getWebDoctorsToken(username, password) {
+async function getWebDoctorsToken() {
   try {
     let data = qs.stringify({
       username:
@@ -194,7 +194,7 @@ async function createMemberHelper(req, accessToken, isWebDoctors = false) {
         city = city.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "");
       } else {
         throw new Error("invalid city or zip");
-        }
+      }
       console.log("CITY HERE!");
       console.log(city);
 
@@ -1184,34 +1184,71 @@ app.get("/providers", async (req, res) => {
  *                 example: "75001"
  *               groupCode:
  *                  type: string
- 
+ *               city:
+ *                  type: string
+ *               state:
+ *                  type: string
+ *               distance:
+ *                  type: string
+ *               type:
+ *                  type: string
  */
 app.get("/pharmacies", async (req, res) => {
   try {
-    let accessToken = await getSSOAPIToken(
-      req.query.memberExternalId,
-      req.query.groupCode
-    );
-    if (!accessToken) {
-      res.status(500).send({ message: "Invalid credentials" });
-      return;
+    let shouldUseWebDoctors = true;
+
+    if (shouldUseWebDoctors) {
+      accessToken = await getWebDoctorsToken();
+      accessToken = accessToken.access_token;
+
+      const { pharmacyName, city, state, distance, type, zip } = req.query;
+
+      var config = {
+        method: "post",
+        maxBodyLength: Infinity,
+        url: base + "/memberAccount/searchPharmacy",
+        headers: {
+          Authorization: "Bearer " + accessToken,
+        },
+        data: qs.stringify({
+          pharmacyName: pharmacyName,
+          city: city,
+          state: state,
+          distance: distance || 30,
+          type: type || 1,
+          zipcode: zip,
+        }),
+      };
+
+      const response = await axios(config);
+
+      res.send(response.data);
+    } else {
+      let accessToken = await getSSOAPIToken(
+        req.query.memberExternalId,
+        req.query.groupCode
+      );
+      if (!accessToken) {
+        res.status(500).send({ message: "Invalid credentials" });
+        return;
+      }
+      var config = {
+        method: "post",
+        maxBodyLength: Infinity,
+        url: base + "/memberAccount/searchPharmacy",
+        headers: {
+          Authorization: "Bearer " + accessToken,
+        },
+        data: qs.stringify({
+          pharmacyName: req.query.pharmacyName,
+          pharmacyzipCode: req.query.zip,
+        }),
+      };
+
+      const response = await axios(config);
+
+      res.send(response.data);
     }
-    var config = {
-      method: "post",
-      maxBodyLength: Infinity,
-      url: base + "/memberAccount/searchPharmacy",
-      headers: {
-        Authorization: "Bearer " + accessToken,
-      },
-      data: qs.stringify({
-        pharmacyName: req.query.pharmacyName,
-        pharmacyzipCode: req.query.zip,
-      }),
-    };
-
-    const response = await axios(config);
-
-    res.send(response.data);
   } catch (error) {
     console.log(error);
     res.send(error);
@@ -1271,10 +1308,7 @@ app.post(
     try {
       let accessToken = "";
       if (shouldUseWebDoctors) {
-        accessToken = await getWebDoctorsToken(
-          req.body.email,
-          req.body.password
-        );
+        accessToken = await getWebDoctorsToken();
         accessToken = accessToken.access_token;
       } else {
         accessToken = await getCensusAdminToken();
@@ -1315,6 +1349,8 @@ app.post(
  *                 example: "PHARM123"
  *               groupCode:
  *                 type: string
+ *               patientId:
+ *                 type: string
  *
  *     responses:
  *       200:
@@ -1335,30 +1371,58 @@ app.post(
  */
 app.post("/setPreferredPharmacy", async (req, res) => {
   try {
-    let accessToken = await getSSOAPIToken(
-      req.body.memberExternalId,
-      req.body.groupCode
-    );
+    const shouldUseWebDoctors = true;
 
-    var data = new FormData();
-    data.append("sureScriptPharmacyId", req.body.pharmacyId);
-    data.append("isPreferred", true);
+    if (shouldUseWebDoctors) {
+      let accessToken = await getWebDoctorsToken();
+      accessToken = accessToken.access_token;
 
-    var config = {
-      method: "post",
-      maxBodyLength: Infinity,
-      url: base + "/memberAccount/addUserToSureScriptPharmacy",
-      headers: {
-        Authorization: "Bearer " + accessToken,
-      },
-      data: data,
-    };
+      var data = new FormData();
+      data.append("Code", req.body.pharmacyId);
+      data.append("PatientId", req.body.patientId);
 
-    const response = await axios(config);
-    if (response.data) {
-      res.send(response.data.success);
+      var config = {
+        method: "post",
+        maxBodyLength: Infinity,
+        url: baseWD + "/api/Patient/AddPreferredPharmacy",
+        headers: {
+          Authorization: "Bearer " + accessToken,
+        },
+        data: data,
+      };
+
+      const response = await axios(config);
+      if (response.data) {
+        res.send(response.data.success);
+      } else {
+        res.send(response.data.message);
+      }
     } else {
-      res.send(response.data.message);
+      let accessToken = await getSSOAPIToken(
+        req.body.memberExternalId,
+        req.body.groupCode
+      );
+
+      var data = new FormData();
+      data.append("sureScriptPharmacyId", req.body.pharmacyId);
+      data.append("isPreferred", true);
+
+      var config = {
+        method: "post",
+        maxBodyLength: Infinity,
+        url: base + "/memberAccount/addUserToSureScriptPharmacy",
+        headers: {
+          Authorization: "Bearer " + accessToken,
+        },
+        data: data,
+      };
+
+      const response = await axios(config);
+      if (response.data) {
+        res.send(response.data.success);
+      } else {
+        res.send(response.data.message);
+      }
     }
   } catch (error) {
     res.send(error);
