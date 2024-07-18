@@ -1382,9 +1382,10 @@ app.post("/setPreferredPharmacy", async (req, res) => {
       let accessToken = await getWebDoctorsToken();
       accessToken = accessToken.access_token;
 
-      var data = new FormData();
-      data.append("Code", req.body.pharmacyId);
-      data.append("PatientId", req.body.patientId);
+      var data = JSON.stringify({
+        Code: req.body.pharmacyId,
+        PatientId: req.body.patientId,
+      });
 
       var config = {
         method: "post",
