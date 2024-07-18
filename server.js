@@ -1208,16 +1208,18 @@ app.get("/pharmacies", async (req, res) => {
         maxBodyLength: Infinity,
         url:
           baseWD +
-            "/api/Pharmacy/Search?name=" +
-            pharmacyName +
-            "&city=" +
-            city +
-            "&state=" +
-            state +
-            "&distance=" +
-            distance ||
-          30 + "&type=" + type ||
-          1 + "&zip=" + zip,
+          "/api/Pharmacy/Search?name=" +
+          pharmacyName +
+          "&city=" +
+          city +
+          "&state=" +
+          state +
+          "&distance=" +
+          (distance || 30) +
+          "&type=" +
+          (type || 1) +
+          "&zip=" +
+          zip,
         headers: {
           Authorization: "Bearer " + accessToken,
         },
