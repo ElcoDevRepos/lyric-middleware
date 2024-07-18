@@ -1206,7 +1206,7 @@ app.get("/pharmacies", async (req, res) => {
       var config = {
         method: "post",
         maxBodyLength: Infinity,
-        url: base + "/api/Pharmacy/Search",
+        url: baseWD + "/api/Pharmacy/Search",
         headers: {
           Authorization: "Bearer " + accessToken,
         },
