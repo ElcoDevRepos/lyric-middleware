@@ -1204,20 +1204,24 @@ app.get("/pharmacies", async (req, res) => {
       const { pharmacyName, city, state, distance, type, zip } = req.query;
 
       var config = {
-        method: "post",
+        method: "get",
         maxBodyLength: Infinity,
-        url: baseWD + "/api/Pharmacy/Search",
+        url:
+          baseWD +
+            "/api/Pharmacy/Search?name=" +
+            pharmacyName +
+            "&city=" +
+            city +
+            "&state=" +
+            state +
+            "&distance=" +
+            distance ||
+          30 + "&type=" + type ||
+          1 + "&zip=" + zip,
         headers: {
           Authorization: "Bearer " + accessToken,
         },
-        data: qs.stringify({
-          pharmacyName: pharmacyName,
-          city: city,
-          state: state,
-          distance: distance || 30,
-          type: type || 1,
-          zipcode: zip,
-        }),
+        data: new FormData(),
       };
 
       const response = await axios(config);
