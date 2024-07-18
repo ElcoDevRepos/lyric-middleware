@@ -1218,7 +1218,7 @@ app.get("/pharmacies", async (req, res) => {
           (distance || 2) +
           "&type=" +
           (type || 1) +
-          "&zip=" +
+          "&zipcode=" +
           zip,
         headers: {
           Authorization: "Bearer " + accessToken,
