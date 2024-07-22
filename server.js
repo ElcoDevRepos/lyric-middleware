@@ -1201,7 +1201,7 @@ app.get("/pharmacies", async (req, res) => {
       accessToken = await getWebDoctorsToken();
       accessToken = accessToken.access_token;
 
-      const { pharmacyName, city, state, distance, type, zip } = req.query;
+      const { pharmacyName, city, state, distance, type, zip } = req.body;
 
       var config = {
         method: "get",
