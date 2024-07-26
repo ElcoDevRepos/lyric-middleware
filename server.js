@@ -1215,19 +1215,58 @@ app.get("/pharmacies", async (req, res) => {
           "&state=" +
           state +
           "&distance=" +
-          (distance || 2) +
+          (distance || 20000) +
           "&type=" +
-          (type || 1) +
+          0 +
           "&zipcode=" +
           zip,
         headers: {
           Authorization: "Bearer " + accessToken,
         },
       };
+      var configTwo = {
+        method: "get",
+        maxBodyLength: Infinity,
+        url:
+          baseWD +
+          "/api/Pharmacy/Search?name=" +
+          pharmacyName +
+          "&city=" +
+          city +
+          "&state=" +
+          state +
+          "&distance=" +
+          (distance || 20000) +
+          "&type=" +
+          1 +
+          "&zipcode=" +
+          zip,
+        headers: {
+          Authorization: "Bearer " + accessToken,
+        },
+      };
+      let combinedResults = [];
 
-      const response = await axios.request(config);
+      try {
+        const response0 = await axios.request(config);
 
-      res.send(response.data);
+        if (response0.status == 200) {
+          combinedResults.push(response0.data);
+        }
+      } catch (error) {
+        console.log(error.response.status);
+      }
+      try {
+        const response1 = await axios.request(configTwo);
+
+        if (response1.status == 200) {
+          combinedResults.push(response1.data);
+        }
+      } catch (error) {
+        console.log(error.response.status);
+      }
+
+      res.send(combinedResults);
     } else {
       let accessToken = await getSSOAPIToken(
         req.query.memberExternalId,
