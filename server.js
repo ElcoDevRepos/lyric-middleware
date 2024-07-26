@@ -1380,8 +1380,8 @@ app.post("/setPreferredPharmacy", async (req, res) => {
 
     if (shouldUseWebDoctors) {
       let accessToken = await getWebDoctorsToken();
-      accessToken = accessToken.access_token;
 
+      accessToken = accessToken.access_token;
       var data = JSON.stringify({
         Code: req.body.pharmacyId,
         PatientId: req.body.patientId,
@@ -1401,6 +1401,7 @@ app.post("/setPreferredPharmacy", async (req, res) => {
       const response = await axios.request(config);
       console.log(response);
       if (response.data) {
+        console.log("HERE");
         res.send(response.data);
       } else {
         res.send(response.data.message);
@@ -1433,7 +1434,11 @@ app.post("/setPreferredPharmacy", async (req, res) => {
       }
     }
   } catch (error) {
-    res.send(error);
+    if (error.response) {
+      res.send(error.response.data.Message);
+      return;
+    }
+    res.status(500).send("Something went wrong");
   }
 });
 
