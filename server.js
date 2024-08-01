@@ -3,6 +3,7 @@ const axios = require("axios");
 const qs = require("qs");
 const auth = require("basic-auth");
 const fs = require("fs");
+const cors = require("cors");
 
 var bodyParser = require("body-parser");
 const swaggerUi = require("swagger-ui-express");
@@ -44,6 +45,7 @@ const baseWD =
 
 const wdVendorId = process.env.ENVIRONMENT == "staging" ? 35 : 15; // staging is 35
 
+app.use(cors());
 // Middleware to handle JSON requests
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
