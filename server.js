@@ -186,11 +186,15 @@ async function createMemberHelper(req, accessToken, isWebDoctors = false) {
     var data = new FormData();
 
     if (isWebDoctors) {
+      console.log(req.body);
+
       let city = req.body.city;
       let zip = "";
       if (req.body.zip) {
         zip = req.body.zip.split("-")[0];
       }
+      console.log(city);
+      console.log(zip);
       if (!city && zip) {
         city = await getCityName(zip);
         city = city.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "");
