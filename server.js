@@ -176,7 +176,12 @@ async function getWebDoctorsToken() {
   }
 }
 
-async function createMemberHelper(req, accessToken, isWebDoctors = false) {
+async function createMemberHelper(
+  req,
+  accessToken,
+  isWebDoctors = false,
+  isIV = false
+) {
   try {
     if (!req) throw new Error("Request is required");
     if (!accessToken) {
@@ -217,6 +222,7 @@ async function createMemberHelper(req, accessToken, isWebDoctors = false) {
         Address2: req.body.address2,
         City: city,
         Zipcode: zip,
+        AccountType: isIV ? 2 : null,
       };
       member.FirstName = req.body.firstName.replace(/[-\s]/g, "");
       member.LastName = req.body.lastName.replace(/[-\s]/g, "");
@@ -225,9 +231,12 @@ async function createMemberHelper(req, accessToken, isWebDoctors = false) {
       let config = {
         method: "post",
         maxBodyLength: Infinity,
-        url: baseWD + "/api/ZapierIntegration/CreateMember",
+        url: !isIV
+          ? baseWD + "/api/ZapierIntegration/CreateMember"
+          : baseWD + "/api/patient/createpatient",
         headers: {
           "Content-Type": "application/json",
+          Authorization: "Bearer " + accessToken,
         },
         data: JSON.stringify(member),
       };
@@ -608,6 +617,134 @@ app.post("/createMember", upload.none(), async (req, res) => {
     } else {
       res.send(error.response.data.message);
     }
+  }
+});
+
+app.post("/createMemberIV", upload.none(), async (req, res) => {
+  try {
+    accessToken = await getWebDoctorsToken();
+    accessToken = accessToken.access_token;
+    const response = await createMemberHelper(req, accessToken, true, true);
+    if (true) {
+      console.log(response);
+      if (response.data) {
+        if (response.data.Message) {
+          res.send({
+            success: false,
+            message: response.data.Message,
+          });
+        } else {
+          res.send({
+            success: true,
+            userid: response.data.toString(),
+          }); // returns an ID
+        }
+      }
+    }
+    if (response.data.success) {
+      res.send(response.data);
+    } else {
+      res.send(response.data.Message);
+    }
+  } catch (error) {
+    console.log(error);
+    if (true) {
+      res.send({
+        success: false,
+        message: error.response.data.Message,
+      });
+    } else {
+      res.send(error.response.data.message);
+    }
+  }
+});
+
+app.get("/conditions", async (req, res) => {
+  try {
+    accessToken = await getWebDoctorsToken();
+    accessToken = accessToken.access_token;
+    let config = {
+      method: "get",
+      maxBodyLength: Infinity,
+      url: baseWD + "/api/reason/conditions?PatientId=" + req.query.patientId,
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + accessToken,
+      },
+    };
+
+    const response = await axios.request(config);
+    if (response.data) {
+      console.log(response.data);
+      res.send(response.data);
+    } else {
+      res.send("Something went wrong");
+    }
+  } catch (error) {
+    res.send(error);
+  }
+});
+
+app.get("/symptoms", async (req, res) => {
+  try {
+    accessToken = await getWebDoctorsToken();
+    accessToken = accessToken.access_token;
+    let config = {
+      method: "get",
+      maxBodyLength: Infinity,
+      url: baseWD + "/api/reason/symptoms?conditionId=" + req.query.conditionId,
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + accessToken,
+      },
+    };
+
+    const response = await axios.request(config);
+    if (response.data) {
+      console.log(response.data);
+      res.send(response.data);
+    } else {
+      res.send("Something went wrong");
+    }
+  } catch (error) {
+    res.send(error);
+  }
+});
+
+app.post("/createConsultationWebDoctors", async (req, res) => {
+  try {
+    accessToken = await getWebDoctorsToken();
+    accessToken = accessToken.access_token;
+
+    const data = {
+      PatientId: req.body.patientId,
+      ReasonId: req.body.reasonId,
+      SymptomIds: req.body.symptomIds,
+      CreatedBy: req.body.patientId,
+    };
+    let config = {
+      method: "post",
+      maxBodyLength: Infinity,
+      url: baseWD + "/api/encounter/create",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + accessToken,
+      },
+      data: JSON.stringify(data),
+    };
+    const response = await axios.request(config);
+    if (response.data) {
+      res.send({
+        message: "Consultation created",
+        success: true,
+        id: response.data,
+      });
+    } else {
+      res.send({ message: "Something went wrong", success: false });
+    }
+  } catch (error) {
+    console.log(error);
+    res.send(error);
   }
 });
 
