@@ -532,13 +532,13 @@ app.post("/login", async (req, res) => {
  *               - zip
  *             properties:
  *               firstName:
- *                 type: string
+ *                 type: string, required
  *               lastName:
- *                 type: string
+ *                 type: string, required
  *               dateOfBirth:
- *                 type: string
+ *                 type: string, required
  *               gender:
- *                 type: string
+ *                 type: string, required
  *               memberExternalId:
  *                 type: string
  *               state:
@@ -556,15 +556,15 @@ app.post("/login", async (req, res) => {
  *               weight:
  *                  type: string
  *               address:
- *                  type: string
+ *                  type: string, required
  *               address2:
- *                  type: string
+ *                  type: string, required
  *               email:
- *                  type: string
+ *                  type: string, required
  *               phone:
- *                  type: string
+ *                  type: string, required
  *               zip:
- *                  type: string
+ *                  type: string, required
  *
  *     responses:
  *       200:
