@@ -9,6 +9,8 @@ var bodyParser = require("body-parser");
 const swaggerUi = require("swagger-ui-express");
 const swaggerJsdoc = require("swagger-jsdoc");
 const multer = require("multer");
+const webDoctorsRoutes = require("./routes/web-doctors");
+
 let Blob;
 var storage = multer.memoryStorage(); // Storing files in memory
 var upload = multer({ storage: storage });
@@ -58,6 +60,7 @@ app.use(function (req, res, next) {
   );
   next();
 });
+app.use("/", webDoctorsRoutes);
 const authMiddleware = (req, res, next) => {
   const user = auth(req);
 
@@ -191,24 +194,17 @@ async function createMemberHelper(
     var data = new FormData();
 
     if (isWebDoctors) {
-      console.log(req.body);
-
       let city = req.body.city;
       let zip = "";
       if (req.body.zip) {
         zip = req.body.zip.split("-")[0];
       }
-      console.log(city);
-      console.log(zip);
       if (!city && zip) {
         city = await getCityName(zip);
         city = city.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "");
       } else {
         throw new Error("invalid city or zip");
       }
-      console.log("CITY HERE!");
-      console.log(city);
-
       member = {
         ID: 0,
         FirstName: req.body.firstName,
@@ -226,8 +222,6 @@ async function createMemberHelper(
       };
       member.FirstName = req.body.firstName.replace(/[-\s]/g, "");
       member.LastName = req.body.lastName.replace(/[-\s]/g, "");
-      console.log("MEMBER!");
-      console.log(member);
       let config = {
         method: "post",
         maxBodyLength: Infinity,
@@ -383,8 +377,6 @@ async function addAttachmentHelper(req, accessToken, shouldUseWebDoctors) {
   }
 }
 
-/* 1-1 with https://docs.getlyric.com/#8537a622-8775-4d83-8192-75944d8b847c */
-/* Does this use the SSOToken or the CensusAdminToken? */
 async function updateMemberTerminationDateHelper(req, termDate, accessToken) {
   if (!req) return null;
   if (!accessToken) {
@@ -461,7 +453,7 @@ app.use(
 
 /**
  * @swagger
- * /login/lyric:
+ * /login:
  *   post:
  *     summary: Patient login
  *     requestBody:
@@ -484,7 +476,7 @@ app.use(
  *       500:
  *         description: Internal server error
  */
-app.post("/login/lyric", async (req, res) => {
+app.post("/login", async (req, res) => {
   if (!req.body || !req.body.email || !req.body.password) {
     res.status(400).send("Missing required fields email and/or password");
   }
@@ -656,95 +648,6 @@ app.post("/createMemberIV", upload.none(), async (req, res) => {
     } else {
       res.send(error.response.data.message);
     }
-  }
-});
-
-app.get("/conditions", async (req, res) => {
-  try {
-    accessToken = await getWebDoctorsToken();
-    accessToken = accessToken.access_token;
-    let config = {
-      method: "get",
-      maxBodyLength: Infinity,
-      url: baseWD + "/api/reason/conditions?PatientId=" + req.query.patientId,
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: "Bearer " + accessToken,
-      },
-    };
-
-    const response = await axios.request(config);
-    if (response.data) {
-      console.log(response.data);
-      res.send(response.data);
-    } else {
-      res.send("Something went wrong");
-    }
-  } catch (error) {
-    res.send(error);
-  }
-});
-
-app.get("/symptoms", async (req, res) => {
-  try {
-    accessToken = await getWebDoctorsToken();
-    accessToken = accessToken.access_token;
-    let config = {
-      method: "get",
-      maxBodyLength: Infinity,
-      url: baseWD + "/api/reason/symptoms?conditionId=" + req.query.conditionId,
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: "Bearer " + accessToken,
-      },
-    };
-
-    const response = await axios.request(config);
-    if (response.data) {
-      console.log(response.data);
-      res.send(response.data);
-    } else {
-      res.send("Something went wrong");
-    }
-  } catch (error) {
-    res.send(error);
-  }
-});
-
-app.post("/createConsultationWebDoctors", async (req, res) => {
-  try {
-    accessToken = await getWebDoctorsToken();
-    accessToken = accessToken.access_token;
-
-    const data = {
-      PatientId: req.body.patientId,
-      ReasonId: req.body.reasonId,
-      SymptomIds: req.body.symptomIds,
-      CreatedBy: req.body.patientId,
-    };
-    let config = {
-      method: "post",
-      maxBodyLength: Infinity,
-      url: baseWD + "/api/encounter/create",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: "Bearer " + accessToken,
-      },
-      data: JSON.stringify(data),
-    };
-    const response = await axios.request(config);
-    if (response.data) {
-      res.send({
-        message: "Consultation created",
-        success: true,
-        id: response.data,
-      });
-    } else {
-      res.send({ message: "Something went wrong", success: false });
-    }
-  } catch (error) {
-    console.log(error);
-    res.send(error);
   }
 });
 
