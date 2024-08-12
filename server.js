@@ -520,58 +520,51 @@ app.post("/login", async (req, res) => {
  *         application/json:
  *           schema:
  *             type: object
+ *             required:
+ *               - firstName
+ *               - lastName
+ *               - dateOfBirth
+ *               - gender
+ *               - address
+ *               - address2
+ *               - email
+ *               - phone
+ *               - zip
  *             properties:
  *               firstName:
  *                 type: string
- *                 required: true
  *               lastName:
  *                 type: string
- *                 required: true
  *               dateOfBirth:
  *                 type: string
- *                 required: true
  *               gender:
  *                 type: string
- *                 required: true
  *               memberExternalId:
  *                 type: string
- *                 required: false
  *               state:
  *                 type: string
- *                 required: false
  *               groupCode:
  *                  type: string
- *                  required: false
  *               planId:
  *                  type: string
- *                  required: false
  *               planDetailsId:
  *                  type: string
- *                  required: false
  *               heightFeet:
  *                  type: string
- *                  required: false
  *               heightInches:
  *                  type: string
- *                  required: false
  *               weight:
  *                  type: string
- *                  required: false
  *               address:
  *                  type: string
- *                  required: true
  *               address2:
  *                  type: string
- *                  required: true
  *               email:
  *                  type: string
- *                  required: true
  *               phone:
  *                  type: string
- *                  required: true
  *               zip:
  *                  type: string
- *                  required: true
  *
  *     responses:
  *       200:
