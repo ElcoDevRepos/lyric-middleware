@@ -80,6 +80,25 @@ router.get("/patient", async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /conditions:
+ *   get:
+ *     summary: Get conditions for a patient
+ *     tags: [Reason]
+ *     parameters:
+ *       - in: query
+ *         name: PatientId
+ *         required: false
+ *         schema:
+ *           type: integer
+ *         description: The ID of the patient
+ *     responses:
+ *       200:
+ *         description: List of conditions
+ *       500:
+ *         description: Internal server error
+ */
 router.get("/conditions", async (req, res) => {
   try {
     accessToken = await getWebDoctorsToken();
@@ -105,6 +124,25 @@ router.get("/conditions", async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /symptoms:
+ *   get:
+ *     summary: Get symptoms for a condition
+ *     tags: [Reason]
+ *     parameters:
+ *       - in: query
+ *         name: conditionId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The ID of the condition
+ *     responses:
+ *       200:
+ *         description: List of symptoms
+ *       500:
+ *         description: Internal server error
+ */
 router.get("/symptoms", async (req, res) => {
   try {
     accessToken = await getWebDoctorsToken();
@@ -130,6 +168,33 @@ router.get("/symptoms", async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /createConsultationWebDoctors:
+ *   post:
+ *     summary: Patient login
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               patientId:
+ *                 type: string
+ *                 example: returned from createMember
+ *               reasonId:
+ *                 type: use /conditions
+ *               symptomIds:
+ *                 type: use /symptoms?conditionId
+ *     responses:
+ *       200:
+ *         description: Patient created successfully
+ *       400:
+ *         description: Bad request. The email or password are not in the request body.
+ *       500:
+ *         description: Internal server error
+ */
 router.post("/createConsultationWebDoctors", async (req, res) => {
   try {
     accessToken = await getWebDoctorsToken();
