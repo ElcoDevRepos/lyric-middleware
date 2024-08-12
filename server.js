@@ -516,7 +516,6 @@ app.post("/login", async (req, res) => {
  *     summary: Create a new member
  *     tags: [Members]
  *     requestBody:
- *       required: true
  *       content:
  *         application/json:
  *           schema:
