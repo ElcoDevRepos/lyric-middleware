@@ -199,6 +199,7 @@ async function createMemberHelper(
       if (req.body.zip) {
         zip = req.body.zip.split("-")[0];
       }
+      console.log(city, zip);
       if (!city && zip) {
         city = await getCityName(zip);
         city = city.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "");
@@ -612,11 +613,16 @@ app.post("/createMember", upload.none(), async (req, res) => {
       res.send(response.data.message);
     }
   } catch (error) {
-    console.log(error);
-    if (shouldUseWebDoctors) {
-      res.send(error.response.data.Message);
-    } else {
-      res.send(error.response.data.message);
+    try {
+      console.log(error);
+      if (shouldUseWebDoctors) {
+        res.send(error.response.data.Message);
+      } else {
+        res.send(error.response.data.message);
+      }
+    } catch (error) {
+      console.log(error);
+      res.send("Something went wrong");
     }
   }
 });
@@ -1848,6 +1854,7 @@ app.post("/reorder", upload.single("AttachmentFile"), async (req, res) => {
 });
 
 async function getCityName(zipCode) {
+  console.log(zipCode);
   const apiKey = "AIzaSyCEMmNnlgzp6-Q6XtpE6RfWZNUtpCdU3ZY";
   const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${zipCode}&key=${apiKey}`;
 
@@ -1867,12 +1874,19 @@ async function getCityName(zipCode) {
     }
 
     const addressComponents = results[0].address_components;
-    const cityComponent = addressComponents.find((component) =>
+    console.log(addressComponents);
+    let cityComponent = addressComponents.find((component) =>
       component.types.includes("locality")
     );
 
     if (!cityComponent) {
-      throw new Error("City not found in address components");
+      cityComponent = addressComponents.find((component) =>
+        component.types.includes("neighborhood")
+      );
+
+      if (!cityComponent) {
+        throw new Error("City not found in address components");
+      }
     }
 
     return cityComponent.long_name;
