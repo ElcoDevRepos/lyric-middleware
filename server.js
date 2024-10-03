@@ -45,7 +45,7 @@ const baseWD =
     ? "https://stgwbclientapi.azurewebsites.net"
     : "https://wbclientapi.webdoctors.com";
 
-const wdVendorId = process.env.ENVIRONMENT == "staging" ? 35 : 15; // staging is 35
+const wdVendorId = process.env.ENVIRONMENT == "staging" ? 35 : 18; // staging is 35
 
 app.use(cors());
 // Middleware to handle JSON requests
