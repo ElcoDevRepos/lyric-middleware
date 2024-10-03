@@ -203,7 +203,7 @@ async function createMemberHelper(
       if (!city && zip) {
         city = await getCityName(zip);
         city = city.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "");
-      } else {
+      } else if (!city && !zip) {
         throw new Error("invalid city or zip");
       }
       member = {
