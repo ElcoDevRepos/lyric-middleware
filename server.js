@@ -632,9 +632,10 @@ app.post("/createMemberIV", upload.none(), async (req, res) => {
   try {
     accessToken = await getWebDoctorsToken();
     accessToken = accessToken.access_token;
-    const response = await createMemberHelper(req, accessToken, true, true);
+    const response = await createMemberHelper(req, accessToken, false, true);
     if (true) {
-      console.log(response);
+      console.log("GOOD RESPONSE: ", response.data);
+      // console.log(response);
       if (response.data) {
         if (response.data.Message) {
           res.send({
@@ -655,7 +656,7 @@ app.post("/createMemberIV", upload.none(), async (req, res) => {
       res.send(response.data.Message);
     }
   } catch (error) {
-    console.log(error);
+    // console.log(error);
     if (true) {
       res.send({
         success: false,

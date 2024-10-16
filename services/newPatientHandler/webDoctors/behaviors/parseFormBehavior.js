@@ -1,6 +1,4 @@
-const { lyricLogin } = require("../../../../lib/lyric/auth");
-
-class LyricFormParser {
+class WebDoctorFormParser {
     constructor(config) {
         this.config = config;
 
@@ -41,5 +39,5 @@ class LyricFormParser {
 }
 
 module.exports = {
-    LyricFormParser
+    WebDoctorFormParser
 }
