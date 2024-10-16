@@ -1,6 +1,8 @@
-class WebDoctorFormParser {
+const { BaseFormParser } = require("../../../formParser/baseFormParser");
+
+class WebDoctorPatientFormParser extends BaseFormParser {
     constructor(config) {
-        this.config = config;
+        super(config);
 
         this.formFields = [
             'firstName',
@@ -24,20 +26,8 @@ class WebDoctorFormParser {
             'city',
         ];
     }
-
-    async parse() {
-        const data = new FormData();
-        const form = this.config.form;
-        this.formFields.forEach((field)=>{
-            if(form[field]) {
-                data.append(field, form[field]);
-            }
-        });
-
-        return form;
-    }
 }
 
 module.exports = {
-    WebDoctorFormParser
+    WebDoctorPatientFormParser
 }

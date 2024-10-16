@@ -3,7 +3,7 @@ class LyricRequestSender {
         this.config = config
     }
 
-    async do() {
+    async create() {
 
     }
 }

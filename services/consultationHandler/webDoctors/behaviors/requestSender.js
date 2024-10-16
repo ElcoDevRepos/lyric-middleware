@@ -1,7 +1,7 @@
 const { getCityName } = require("../../../../lib/google/getCity");
 const { sendWebDoctorsAuthRequest } = require("../../../../lib/webDoctors/authRequest")
 
-class WebDoctorPatientRequest {
+class WebDoctorConsultationRequest {
     constructor(form) {
         this.form = form
     }
@@ -24,19 +24,10 @@ class WebDoctorPatientRequest {
         const wdVendorId = process.env.ENVIRONMENT == "staging" ? 35 : 18;
 
         const member = {
-            ID: 0,
-            FirstName: form.firstName,
-            LastName: form.lastName,
-            Email: form.email,
-            VendorId: wdVendorId,
-            Gender: form.gender,
-            DateOfBirth: form.dateOfBirth,
-            PhoneNo: form.phone,
-            Address1: form.address,
-            Address2: form.address2,
-            City: city,
-            Zipcode: zip,
-            AccountType: 2 
+            PatientId: form.patientId,
+            ReasonId: '', 
+            SymptomIds: [''],
+            CreatedBy: wdVendorId
         };
         member.FirstName = form.firstName.replace(/[-\s]/g, "");
         member.LastName = form.lastName.replace(/[-\s]/g, "");
@@ -58,5 +49,5 @@ class WebDoctorPatientRequest {
 }
 
 module.exports = {
-    WebDoctorPatientRequest
+    WebDoctorConsultationRequest
 }
