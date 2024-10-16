@@ -666,6 +666,12 @@ app.post("/createMemberIV", upload.none(), async (req, res) => {
   }
 });
 
+app.post('/form-submission', upload.none(), async (req, res) => {
+  return res.status(200).send({
+    message: 'received'
+  });
+});
+
 /**
  * @swagger
  * /newConsultation:
