@@ -8,7 +8,7 @@ class ConsultationHandler {
     }
 
     async createConsultation() {
-        const parseFormBehavior = new this.parseFormBehavior(config);
+        const parseFormBehavior = new this.parseFormBehavior(this.config);
         const parsedForm = await parseFormBehavior.parse();
         if(parsedForm.error) {
             return parsedForm;

@@ -5,6 +5,7 @@ const { BasePostController } = require("../base/base");
 
 class FormSubmissionController extends BasePostController {
     constructor() {
+        super();
         this.required_fields = [
             'formId',
             'form'

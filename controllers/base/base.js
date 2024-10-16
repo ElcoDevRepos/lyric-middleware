@@ -23,15 +23,15 @@ class BasePostController {
             const response = await this.post(verified_fields);
             let http_code = 200;
             if(response?.error) {
-                if(response.error?.http_code) {
-                    http_code = response?.error?.http_code;
+                if(response.error?.code) {
+                    http_code = response?.error?.code;
                 }
 
-                return res.status(http_code).send(response.data);
+                return res.status(http_code).send({message: response.error.message});
             }
 
-            if(response?.http_code) {
-                http_code = response?.http_code;
+            if(response?.code) {
+                http_code = response?.code;
             }
 
             return res.status(http_code).send(response);

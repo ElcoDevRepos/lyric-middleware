@@ -8,7 +8,7 @@ class FormFinder {
     }
 
     async getFormInfo() {
-        const findBehavior = new this.findBehavior(config);
+        const findBehavior = new this.findBehavior(this.config);
         const formInfo = await findBehavior.find();
 
         return formInfo;

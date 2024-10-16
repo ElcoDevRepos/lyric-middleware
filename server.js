@@ -10,6 +10,7 @@ const swaggerUi = require("swagger-ui-express");
 const swaggerJsdoc = require("swagger-jsdoc");
 const multer = require("multer");
 const webDoctorsRoutes = require("./routes/web-doctors");
+const { FormSubmissionController } = require("./controllers/formSubmission/formSubmission");
 
 let Blob;
 var storage = multer.memoryStorage(); // Storing files in memory
@@ -667,9 +668,8 @@ app.post("/createMemberIV", upload.none(), async (req, res) => {
 });
 
 app.post('/form-submission', upload.none(), async (req, res) => {
-  return res.status(200).send({
-    message: 'received'
-  });
+  const formSubmissionController = new FormSubmissionController();
+  await formSubmissionController.do(req, res);
 });
 
 /**
