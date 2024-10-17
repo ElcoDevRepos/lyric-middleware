@@ -11,6 +11,8 @@ const swaggerJsdoc = require("swagger-jsdoc");
 const multer = require("multer");
 const webDoctorsRoutes = require("./routes/web-doctors");
 const { FormSubmissionController } = require("./controllers/formSubmission/formSubmission");
+const { WebDoctorsConditionsController } = require("./controllers/webdoctors/conditions");
+const { WebDoctorsSymptomsController } = require("./controllers/webdoctors/symptoms");
 
 let Blob;
 var storage = multer.memoryStorage(); // Storing files in memory
@@ -671,6 +673,15 @@ app.post("/createMemberIV", upload.none(), async (req, res) => {
 app.post('/form-submission', upload.none(), async (req, res) => {
   const formSubmissionController = new FormSubmissionController();
   await formSubmissionController.do(req, res);
+});
+
+app.get('/webdoctors/conditions', upload.none(), async (req, res) => {
+  const getConditionsController = new WebDoctorsConditionsController();
+  await getConditionsController.get(req, res);
+});
+app.get('/webdoctors/symptoms', upload.none(), async (req, res) => {
+  const webDoctorsSymptomsController = new WebDoctorsSymptomsController();
+  await webDoctorsSymptomsController.get(req, res);
 });
 
 /**
