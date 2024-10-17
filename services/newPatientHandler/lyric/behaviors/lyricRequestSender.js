@@ -5,9 +5,19 @@ class LyricRequestSender {
         this.config = config
     }
 
-    async sendRequest() {
-        const res = await sendLyricAuthenticatedRequest("/census/createMember", this.config);
-        console.log(res.data);
+    async create() {
+        const data = {
+            ...this.config.form,
+            primaryExternalId: this.config.formId
+        }
+        const formData = new FormData();
+        for (const key in data) {
+            if (data.hasOwnProperty(key)) {
+                formData.append(key, data[key]);
+            }
+        }
+
+        const response = await sendLyricAuthenticatedRequest('/census/createMember/', formData)
     }
 }
 

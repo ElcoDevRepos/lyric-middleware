@@ -43,11 +43,11 @@ class FormSubmissionController extends BasePostController {
         if(formInfo.intent === 'New Patient') {
             
             let returnInfo = {};
-            // if(formInfo?.userDataStore?.lyric) {
-            //     const newPatientHandler = new NewLyricPatientHandler({...verified_fields, formInfo, form: verified_fields.form});
-            //     const lyricData = await newPatientHandler.createPatient();
-            //     returnInfo.lyricData = lyricData;
-            // }
+            if(formInfo?.userDataStore?.lyric) {
+                const newPatientHandler = new NewLyricPatientHandler({...verified_fields, formInfo, form: verified_fields.form});
+                const lyricData = await newPatientHandler.createPatient();
+                returnInfo.lyricData = lyricData;
+            }
 
             if(formInfo?.userDataStore?.webDoctors) {
                 const newPatientHandler = new WebDoctorsNewPatientHandler({...verified_fields, formInfo, form: verified_fields.form});

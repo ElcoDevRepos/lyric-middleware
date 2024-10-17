@@ -14,7 +14,7 @@ class NewPatientHandler {
             return parsedForm;
         }
 
-        const sendRequestBehavior = new this.sendRequestBehavior(parsedForm);
+        const sendRequestBehavior = new this.sendRequestBehavior({...this.config, ...parsedForm});
         const response = await sendRequestBehavior.create();
         if(response.error) {
             return response;

@@ -88,6 +88,7 @@ async function login(email, password) {
     url: base + "/login",
     data: data,
   };
+
   return axios(config);
 }
 async function getSSOAPIToken(memberExternalId, groupCode) {
@@ -144,6 +145,7 @@ async function getCensusAdminToken() {
       ? "!vse5d4BzL1s0u#irN@!"
       : "|faeiXj-4d9UD1aLf9w9"
   );
+  
   if (response.data && response.data.success == true) {
     var token = response.headers.authorization;
     token = token.replace("Bearer ", "").trim();
@@ -202,7 +204,6 @@ async function createMemberHelper(
       if (req.body.zip) {
         zip = req.body.zip.split("-")[0];
       }
-      console.log(city, zip);
       if (!city && zip) {
         city = await getCityName(zip);
         city = city.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "");
@@ -577,7 +578,7 @@ app.post("/login", async (req, res) => {
  *         description: Something went wrong
  */
 app.post("/createMember", upload.none(), async (req, res) => {
-  let shouldUseWebDoctors = true;
+  let shouldUseWebDoctors = false;
 
   try {
     let accessToken = "";
@@ -585,7 +586,7 @@ app.post("/createMember", upload.none(), async (req, res) => {
       //accessToken = await getWebDoctorsToken(req.body.email, req.body.password);
       //accessToken = accessToken.access_token;
     } else {
-      //accessToken = await getCensusAdminToken();
+      accessToken = await getCensusAdminToken();
     }
 
     /* Broke most out into a helper function for reuse */
@@ -595,7 +596,6 @@ app.post("/createMember", upload.none(), async (req, res) => {
       shouldUseWebDoctors
     );
     if (shouldUseWebDoctors) {
-      console.log(response);
       if (response.data) {
         if (response.data.Message) {
           res.send({
@@ -636,7 +636,6 @@ app.post("/createMemberIV", upload.none(), async (req, res) => {
     accessToken = accessToken.access_token;
     const response = await createMemberHelper(req, accessToken, false, true);
     if (true) {
-      console.log("GOOD RESPONSE: ", response.data);
       // console.log(response);
       if (response.data) {
         if (response.data.Message) {
@@ -1517,9 +1516,7 @@ app.post("/setPreferredPharmacy", async (req, res) => {
       };
 
       const response = await axios.request(config);
-      console.log(response);
       if (response.data) {
-        console.log("HERE");
         res.send(response.data);
       } else {
         res.send(response.data.message);
@@ -1872,7 +1869,6 @@ app.post("/reorder", upload.single("AttachmentFile"), async (req, res) => {
 });
 
 async function getCityName(zipCode) {
-  console.log(zipCode);
   const apiKey = "AIzaSyCEMmNnlgzp6-Q6XtpE6RfWZNUtpCdU3ZY";
   const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${zipCode}&key=${apiKey}`;
 
@@ -1892,7 +1888,6 @@ async function getCityName(zipCode) {
     }
 
     const addressComponents = results[0].address_components;
-    console.log(addressComponents);
     let cityComponent = addressComponents.find((component) =>
       component.types.includes("locality")
     );
