@@ -8,6 +8,7 @@ class WebDoctorConsultationFormParser extends BaseFormParser {
             'patientId',
             'reasonId',
             'symptomIds',
+            'createdBy'
         ];
     }
 }

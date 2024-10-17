@@ -20,7 +20,7 @@ class ConsultationHandler {
             return response;
         }
         
-        const postProcessBehavior = new this.postProcessBehavior(response);
+        const postProcessBehavior = new this.postProcessBehavior({...this.config, ...response});
         const postData = await postProcessBehavior.process();
 
         return postData;

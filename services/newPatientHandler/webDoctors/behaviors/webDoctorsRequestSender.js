@@ -44,7 +44,7 @@ class WebDoctorPatientRequest {
         try {
             const response = await sendWebDoctorsAuthRequest("/api/patient/createpatient", JSON.stringify(member));
             if(response?.data) {
-                return {id: response.data};
+                return {webDoctorsPatientId: response.data};
             }
         } catch (e) {
             return {

@@ -9,33 +9,18 @@ class WebDoctorConsultationRequest {
     async create() {
         const form = this.form;
 
-        let city = form.city;
-        let zip = "";
-        if (form.zip) {
-            zip = form.zip.split("-")[0];
-        }
-        if (!city && zip) {
-            city = await getCityName(zip);
-            city = city.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "");
-        } else if (!city && !zip) {
-            throw new Error("invalid city or zip");
-        }
-
-        const wdVendorId = process.env.ENVIRONMENT == "staging" ? 35 : 18;
-
-        const member = {
-            PatientId: form.patientId,
-            ReasonId: '', 
-            SymptomIds: [''],
-            CreatedBy: wdVendorId
+        console.log(form);
+        const data = {
+            PatientId: form?.patientId,
+            ReasonId: form?.reasonId, 
+            SymptomIds: form?.symptomIds?.join(','),
+            CreatedBy: form?.createdBy?form.createdBy:form.patientId
         };
-        member.FirstName = form.firstName.replace(/[-\s]/g, "");
-        member.LastName = form.lastName.replace(/[-\s]/g, "");
 
         try {
-            const response = await sendWebDoctorsAuthRequest("/api/patient/createpatient", JSON.stringify(member));
+            const response = await sendWebDoctorsAuthRequest("/api/encounter/create", JSON.stringify(data));
             if(response?.data) {
-                return {id: response.data};
+                return {webDoctorsConsultationId: response.data};
             }
         } catch (e) {
             return {

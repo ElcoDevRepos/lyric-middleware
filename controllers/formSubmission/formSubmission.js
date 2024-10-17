@@ -10,7 +10,8 @@ class FormSubmissionController extends BasePostController {
         super();
         this.required_fields = [
             'formId',
-            'form'
+            'form',
+            'formSubmissionId'
         ]
     }
 
@@ -22,28 +23,18 @@ class FormSubmissionController extends BasePostController {
         }
 
         if(formInfo.intent === 'Consultation') {
-            return {
-                error: {
-                    code: 500,
-                    message: "New Patient not implemented yet"
-                }
-            }
 
             let returnInfo = {};
-            if(formInfo?.userDataStore?.lyric) {
-                const consultationHandler = new LyricConsultationHandler({formInfo, form: verified_fields.form});
-                const lyricData = await consultationHandler.createConsultation();
-                returnInfo.lyricData = lyricData;
-            }
+            // if(formInfo?.userDataStore?.lyric) {
+            //     const consultationHandler = new LyricConsultationHandler({...verified_fields, formInfo, form: verified_fields.form});
+            //     const lyricData = await consultationHandler.createConsultation();
+            //     returnInfo.lyricData = lyricData;
+            // }
 
             if(formInfo?.userDataStore?.webDoctors) {
-                returnInfo.webDoctorsData = {message: 'Not implemented yet'};
-
-                // const consultationHandler = new WebDoctorsConsultationHandler({formInfo, form: verified_fields.form});
-                // const webDoctorsData = await consultationHandler.createConsultation();
-                // if(!webDoctorsData.error) {
-                //     returnInfo.webDoctorsData = webDoctorsData;
-                // }
+                const consultationHandler = new WebDoctorsConsultationHandler({...verified_fields, formInfo, form: verified_fields.form});
+                const webDoctorsData = await consultationHandler.createConsultation();
+                returnInfo.webDoctorsData = webDoctorsData;
             }
 
             return returnInfo;
@@ -53,13 +44,13 @@ class FormSubmissionController extends BasePostController {
             
             let returnInfo = {};
             // if(formInfo?.userDataStore?.lyric) {
-            //     const newPatientHandler = new NewLyricPatientHandler({formInfo, form: verified_fields.form});
+            //     const newPatientHandler = new NewLyricPatientHandler({...verified_fields, formInfo, form: verified_fields.form});
             //     const lyricData = await newPatientHandler.createPatient();
             //     returnInfo.lyricData = lyricData;
             // }
 
             if(formInfo?.userDataStore?.webDoctors) {
-                const newPatientHandler = new WebDoctorsNewPatientHandler({formInfo, form: verified_fields.form});
+                const newPatientHandler = new WebDoctorsNewPatientHandler({...verified_fields, formInfo, form: verified_fields.form});
                 const webDoctorsData = await newPatientHandler.createPatient();
                 returnInfo.webDoctorsData = webDoctorsData;
             }
