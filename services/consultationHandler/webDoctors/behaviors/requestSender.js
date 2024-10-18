@@ -1,4 +1,3 @@
-const { getCityName } = require("../../../../lib/google/getCity");
 const { sendWebDoctorsAuthRequest } = require("../../../../lib/webDoctors/authRequest")
 
 class WebDoctorConsultationRequest {
