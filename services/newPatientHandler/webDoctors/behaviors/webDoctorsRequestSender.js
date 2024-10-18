@@ -2,12 +2,13 @@ const { getCityName } = require("../../../../lib/google/getCity");
 const { sendWebDoctorsAuthRequest } = require("../../../../lib/webDoctors/authRequest")
 
 class WebDoctorPatientRequest {
-    constructor(form) {
-        this.form = form
+    constructor(config) {
+        this.config = config
     }
 
     async create() {
-        const form = this.form;
+        const form = this.config;
+
 
         let city = form.city;
         let zip = "";
@@ -23,6 +24,7 @@ class WebDoctorPatientRequest {
 
         const wdVendorId = process.env.ENVIRONMENT == "staging" ? 35 : 18;
 
+        const isIV = form?.formInfo?.webDoctorsMetaData?.isIV;
         const member = {
             ID: 0,
             FirstName: form.firstName,
@@ -36,13 +38,15 @@ class WebDoctorPatientRequest {
             Address2: form.address2,
             City: city,
             Zipcode: zip,
-            AccountType: 2 
+            AccountType: isIV ? 2 : null 
         };
         member.FirstName = form.firstName.replace(/[-\s]/g, "");
         member.LastName = form.lastName.replace(/[-\s]/g, "");
 
+        let endpoint = isIV?"/api/patient/createpatient":"/api/ZapierIntegration/CreateMember";
+
         try {
-            const response = await sendWebDoctorsAuthRequest("/api/patient/createpatient", JSON.stringify(member));
+            const response = await sendWebDoctorsAuthRequest(endpoint, JSON.stringify(member));
             if(response?.data) {
                 return {webDoctorsPatientId: response.data};
             }
