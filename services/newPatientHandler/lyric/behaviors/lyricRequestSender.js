@@ -20,8 +20,8 @@ class LyricRequestSender {
         const feetHeight = parseInt(form.heightFeet);
         const inchHeight = parseInt(form.heightInches);
         const weight = parseInt(form.weight); 
-        const stateAb = addressComponents[2]?.short_name;
-        const city = addressComponents[1];
+        const stateAb = addressComponents?.[2]?.short_name;
+        const city = addressComponents?.[1];
 
         const res = await sendLyricAuthenticatedRequest('/states/all', {}, 'get');
         const data = res?.data;

@@ -4,7 +4,9 @@ class LyricPostProcessor {
     }
 
     async process() {
-
+        return {
+            success: this.config.success
+        }
     }
 }
 

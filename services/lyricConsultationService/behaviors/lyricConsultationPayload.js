@@ -32,15 +32,12 @@ class LyricConsultationPayload {
 
         let appointment_details;
         if (this.config.consultationType == "urgentcare") {
-            console.log("IS URGENT CARE")
             appointment_details = {
                 when_scheduled: this.config.whenScheduled,
                 consult_time_zone: this.config.timezoneOffset,
                 preferred_language: this.config.translate,
             };
         } else {
-            console.log("IS NOT URGENT CARE")
-
             appointment_details = {
                 provider_id: this.config.provider_id,
                 time_slot_id: this.config.timeslot,

@@ -8,11 +8,19 @@ class LyricConsultationRequestSender {
     async send() {
         const payload = this.config.payload;
         const url = `/consultation/createConsultation/${this.config.consultationType}`;
-        const res = await sendLyricAuthenticatedRequest(url, payload, 'post', this.config.ssoToken);
-        const data = res.data;
 
-        console.log("consultation data: ", data);
-        return data;
+        try {
+            const res = await sendLyricAuthenticatedRequest(url, payload, 'post', this.config.ssoToken);
+            const data = res.data;
+            return data;
+        } catch (e) {
+            return {
+                error: {
+                    code: e.response.status,
+                    message: e.response.data
+                }
+            }
+        }
     }
 }
 

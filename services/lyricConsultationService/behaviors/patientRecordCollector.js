@@ -11,10 +11,18 @@ class LyricPatientRecordCollector {
         const user = this.config.eligibilityData.user;
 
         const url = "/v2/consultation/" + consultationType + "?user_id=" + user.user_id + "&modality=" + modality;
-        const res = await sendLyricAuthenticatedRequest(url, {}, 'get', this.config.ssoToken);
-        const data = res.data;
-        console.log("patient record return: ", data);
-        return data;
+        try {
+            const res = await sendLyricAuthenticatedRequest(url, {}, 'get', this.config.ssoToken);
+            const data = res.data;
+            return data;
+        } catch (e) {
+            return {
+                error: {
+                    code: e.response.status,
+                    message: e.response.data
+                }
+            }
+        }
     }
 }
 

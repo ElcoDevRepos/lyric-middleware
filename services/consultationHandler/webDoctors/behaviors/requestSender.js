@@ -8,7 +8,6 @@ class WebDoctorConsultationRequest {
     async create() {
         const form = this.form;
 
-        console.log(form);
         const data = {
             PatientId: form?.patientId,
             ReasonId: form?.reasonId, 

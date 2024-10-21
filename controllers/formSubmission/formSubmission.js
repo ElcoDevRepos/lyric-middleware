@@ -25,11 +25,11 @@ class FormSubmissionController extends BasePostController {
         if(formInfo.intent === 'Consultation') {
 
             let returnInfo = {};
-            // if(formInfo?.userDataStore?.lyric) {
-            //     const consultationHandler = new LyricConsultationHandler({...verified_fields, formInfo, form: verified_fields.form});
-            //     const lyricData = await consultationHandler.createConsultation();
-            //     returnInfo.lyricData = lyricData;
-            // }
+            if(formInfo?.userDataStore?.lyric) {
+                const consultationHandler = new LyricConsultationHandler({...verified_fields, formInfo, form: verified_fields.form});
+                const lyricData = await consultationHandler.createConsultation();
+                returnInfo.lyricData = lyricData;
+            }
 
             if(formInfo?.userDataStore?.webDoctors) {
                 const consultationHandler = new WebDoctorsConsultationHandler({...verified_fields, formInfo, form: verified_fields.form});
