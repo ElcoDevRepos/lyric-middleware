@@ -122,6 +122,7 @@ async function getSSOAPIToken(memberExternalId, groupCode) {
         },
       };
       response = await axios(config);
+      console.log("SSO ACCESS RES: ", response.data);
       if (response.data.success) {
         return response.data.accessToken;
       } else {
@@ -834,6 +835,7 @@ app.post("/newConsultation", async (req, res) => {
  */
 app.post("/newConsultationWithType", async (req, res) => {
   try {
+
     const groupCode = req.body.groupCode;
     const modality = req.body.modality;
     const state = parseInt(req.body.state);
@@ -854,6 +856,7 @@ app.post("/newConsultationWithType", async (req, res) => {
     const prescriptionDetails = req.body.prescriptionDetails;
     const type = req.body.type;
     const provider = req.body.provider;
+
     const timeslot = req.body.timeslot;
     if (
       !groupCode ||
@@ -874,6 +877,7 @@ app.post("/newConsultationWithType", async (req, res) => {
       res.status(400).send("Missing required fields");
       return;
     }
+
     prescriptionRefillNeeded = prescriptionRefillNeeded == "true";
 
     if (prescriptionRefillNeeded && !prescriptionDetails) {
@@ -993,8 +997,9 @@ app.post("/newConsultationWithType", async (req, res) => {
           },
         };
 
+        console.log("PAYLOAD: ", patientPayload)
         try {
-          const response = await axios(config);
+          // const response = await axios(config);
 
           if (response.status == 200) {
             if (response.data.success) {
@@ -1003,14 +1008,17 @@ app.post("/newConsultationWithType", async (req, res) => {
               res.status(400).send(response.data.message);
             }
           } else {
+            console.log(response.data);
             res.status(500).send("Something went wrong");
           }
         } catch (error) {
+          // console.log(error);
           res.status(400).send(error.response.data.message);
         }
       }
     }
   } catch (error) {
+    console.log(error);
     res.status(500).send("Something went wrong");
   }
 });
