@@ -1,4 +1,4 @@
-const { getCityName } = require("../../../../lib/google/getCity");
+const { getCityName, getAddressDetailsFromZip } = require("../../../../lib/google/getCity");
 const { sendLyricAuthenticatedRequest } = require("../../../../lib/lyric/authRequest")
 
 class LyricRequestSender {
@@ -7,38 +7,47 @@ class LyricRequestSender {
     }
 
     async create() {
-        const form = this.config.form;
+        const form = this.config;
 
-        let city = form.city;
         let zip = "";
+        let addressComponents = null;
+
         if (form.zip) {
             zip = form.zip.split("-")[0];
+            addressComponents = await getAddressDetailsFromZip(zip);
         }
-        if (!city && zip) {
-            city = await getCityName(zip);
-            city = city.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "");
-        } else if (!city && !zip) {
-            throw new Error("invalid city or zip");
-        }
+        
+        const feetHeight = parseInt(form.heightFeet);
+        const inchHeight = parseInt(form.heightInches);
+        const weight = parseInt(form.weight); 
+        const stateAb = addressComponents[2]?.short_name;
+        const city = addressComponents[1];
+
+        const res = await sendLyricAuthenticatedRequest('/states/all', {}, 'get');
+        const data = res?.data;
+        const states = data?.states;
+        const state = states?.find((s)=>s.abbreviation === stateAb);
+
+        const stateId = parseInt(state.state_id);
 
         const convertedData = {
-            primaryExternalId: this.config.formId,
-            groupCode: form.groupCode,
-            planId: form.planId,
-            planDetailsId: form.planDetailsId,
+            primaryExternalId: this.config.formSubmissionId,
+            groupCode: this.config.formInfo?.lyricMetaData?.groupCode,
+            planId: this.config.formInfo?.lyricMetaData?.planId,
+            planDetailsId: this.config.formInfo?.lyricMetaData?.planDetailsId,
             firstName: form.firstName,
             lastName: form.lastName,
             email: form.email,
             gender: form.gender,
             dob: form.dateOfBirth,
             primaryPhone: form.phone,
-            heightFeet: form.heightFeet,
-            heightInches: form.heightInches,
-            weight: form.weight,
+            heightFeet: feetHeight,
+            heightInches: inchHeight,
+            weight: weight,
             address: form.address,
             address2: form.address2,
             city: city,
-            stateId: form.stateId,
+            stateId: stateId,
             zipCode: zip,
             timezoneId: form.timezoneId,
             disableNotifications: 0,

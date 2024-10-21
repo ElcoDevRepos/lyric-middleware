@@ -11,9 +11,6 @@ class LyricFormParser {
             'gender',
             'memberExternalId',
             'state',
-            'groupCode',
-            'planId',
-            'planDetailsId',
             'heightFeet',
             'heightInches',
             'weight',
@@ -28,15 +25,15 @@ class LyricFormParser {
     }
 
     async parse() {
-        const data = new FormData();
+        let data = {};
         const form = this.config.form;
         this.formFields.forEach((field)=>{
             if(form[field]) {
-                data.append(field, form[field]);
+                data[field] = form[field];
             }
         });
 
-        return form;
+        return data;
     }
 }
 
