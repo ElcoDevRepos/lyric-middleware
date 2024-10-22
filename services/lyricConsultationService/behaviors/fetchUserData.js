@@ -1,13 +1,18 @@
 const { doc, getDocs, query, where, collection } = require("firebase/firestore");
 const { firestore } = require("../../../firebase");
 
-class FetchUserData {
+class LyricUserData {
     constructor(config) {
         this.config = config;
     }
 
     async fetch() {
         const userId = this.config.userId;
+        const data = await this.getExternalId(userId);
+        return data;
+    }
+
+    async getExternalId(userId) {
         if(!userId) {
             throw new Error("FetchUserData must be instantiated with a userId");
         }
@@ -36,5 +41,5 @@ class FetchUserData {
 }
 
 module.exports = {
-    FetchUserData
+    LyricUserData
 }

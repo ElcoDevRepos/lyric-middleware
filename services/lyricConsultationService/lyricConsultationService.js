@@ -1,6 +1,6 @@
 const { getSSOToken } = require("../../lib/lyric/auth");
 const { CheckEligibilityBehavior } = require("./behaviors/checkEligibilityBehavior");
-const { FetchUserData } = require("./behaviors/fetchUserData");
+const { LyricUserData } = require("./behaviors/fetchUserData");
 const { LyricConsultationPayload } = require("./behaviors/lyricConsultationPayload");
 const { LyricPatientRecordCollector } = require("./behaviors/patientRecordCollector");
 const { LyricConsultationRequestSender } = require("./behaviors/requestSender");
@@ -9,7 +9,7 @@ class LyricConsultationService {
     constructor(config) {
         this.config = config;
 
-        this.fetchUserDataBehavior = FetchUserData;
+        this.fetchUserDataBehavior = LyricUserData;
         this.checkEligibilityBehavior = CheckEligibilityBehavior;
         this.patientRecordCollector = LyricPatientRecordCollector; 
         this.createPayloadBehavior = LyricConsultationPayload;
