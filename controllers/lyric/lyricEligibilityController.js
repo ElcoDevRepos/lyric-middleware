@@ -45,7 +45,7 @@ class LyricEligibilityController extends BasePostController {
             consult.details = 'Member not configured for this consultation type.'
         }
 
-        return {consult, user: {id: member.id, email: member.email}};
+        return {consult, user: {id: member.id, email: member.email, patientId: member.lyricPatientId, externalId: member.lyricExternalId}};
     }
 }
 

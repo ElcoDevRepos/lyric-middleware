@@ -15,6 +15,7 @@ const { WebDoctorsConditionsController } = require("./controllers/webdoctors/con
 const { WebDoctorsSymptomsController } = require("./controllers/webdoctors/symptoms");
 const { LyricUserData } = require("./services/lyricConsultationService/behaviors/fetchUserData");
 const { LyricEligibilityController } = require("./controllers/lyric/lyricEligibilityController");
+const { LyricPharmacyFinderController } = require("./controllers/lyric/pharmacyFinder");
 
 let Blob;
 var storage = multer.memoryStorage(); // Storing files in memory
@@ -1026,7 +1027,7 @@ app.post("/newConsultationWithType", async (req, res) => {
   }
 });
 
-app.post("/lyric/consultation/eligibility", async (req, res) => {
+app.post("/consultation/eligibility", async (req, res) => {
   try {
     const lyricEligibilityController = new LyricEligibilityController();
     await lyricEligibilityController.do(req, res);
@@ -1253,6 +1254,11 @@ app.get("/providers", async (req, res) => {
   const response = await axios(config);
 
   res.send(response.data);
+});
+
+app.get('/pharmacy/search', async (req, res)=>{
+  const lyricPharmacyFinderController = new LyricPharmacyFinderController();
+  await lyricPharmacyFinderController.get(req, res);
 });
 
 /**
