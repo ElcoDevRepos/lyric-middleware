@@ -1,6 +1,7 @@
 const { getSSOToken } = require("../../lib/lyric/auth");
 const { CheckEligibilityBehavior } = require("../../services/lyricConsultationService/behaviors/checkEligibilityBehavior");
 const { LyricUserData } = require("../../services/lyricConsultationService/behaviors/fetchUserData");
+const { MemberService } = require("../../services/memberService/memberService");
 const { BasePostController } = require("../base/base");
 
 class LyricEligibilityController extends BasePostController {
@@ -9,33 +10,42 @@ class LyricEligibilityController extends BasePostController {
 
         this.required_fields = [
             'groupCode',
-            'memberId',
+            'email',
             'type',
             'modality',
         ]
     }
 
     async post(verified_fields) {
-        const { groupCode, memberId, type, modality } = verified_fields;
-    
-        const lyricUserDataService = new LyricUserData({userId: memberId});
-        const lyricUserData = await lyricUserDataService.getExternalId(memberId);
-        if(lyricUserData.error) {
-            return lyricUserData;
+        const {groupCode, email, type, modality} = verified_fields;
+        const memberService = new MemberService();
+        const member = await memberService.findMemberByEmail(email);
+        if(!member || !member.lyricExternalId) {
+            return {
+                error: {
+                    code: 400,
+                    message: "This user does not exist or cannot create a consultation of this type"
+                }
+            }
         }
 
-        const memberExternalId = lyricUserData.memberExternalId;
-        const ssoToken = await getSSOToken(memberExternalId, groupCode);
-
+        const ssoToken = await getSSOToken(member.lyricExternalId, groupCode);
         const token = ssoToken.token;
-        const checkEligibilityBehavior = new CheckEligibilityBehavior({
-            consultationType: type, 
-            modality: modality, 
-            ssoToken: token
-        });
 
-        const eligibleUser = await checkEligibilityBehavior.check();
-        return {...eligibleUser, memberExternalId};
+        const consultationConfig = {
+            consultationType: type,
+            modality: modality,
+            ssoToken: token
+        }
+
+        const eligibilityChecker = new CheckEligibilityBehavior(consultationConfig);
+        const check = await eligibilityChecker.check();
+        let consult = {eligible: check?.user?true:false}
+        if(check?.error?.code === 400) {
+            consult.details = 'Member not configured for this consultation type.'
+        }
+
+        return {consult, user: {id: member.id, email: member.email}};
     }
 }
 

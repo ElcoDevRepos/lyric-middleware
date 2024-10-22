@@ -1,10 +1,13 @@
+const { CreateMemberBehavior } = require("./behaviors/createMemberBehavior");
+
 class NewPatientHandler {
     constructor(config) {
         this.config = config;
-
         this.parseFormBehavior = null; // takes md care form and converts it to web doctor or lyric form
         this.sendRequestBehavior = null; // sends the parsed form to the correct endpoint 
         this.postProcessBehavior = null;
+
+        this.createMemberBehavior = CreateMemberBehavior;
     }
 
     async createPatient() {
@@ -23,7 +26,9 @@ class NewPatientHandler {
         const postProcessBehavior = new this.postProcessBehavior({...this.config, ...response});
         const postData = await postProcessBehavior.process();
 
-        return postData;
+        const createMemberBehavior = new this.createMemberBehavior({...this.config, ...response, ...postData, ...parsedForm});
+        const member = await createMemberBehavior.create();
+        return member;
     }
 }
 

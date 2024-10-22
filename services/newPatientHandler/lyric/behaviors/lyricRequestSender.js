@@ -30,8 +30,9 @@ class LyricRequestSender {
 
         const stateId = parseInt(state.state_id);
 
+        const externalId = this.config.formSubmissionId;
         const convertedData = {
-            primaryExternalId: this.config.formSubmissionId,
+            primaryExternalId: externalId,
             groupCode: this.config.formInfo?.lyricMetaData?.groupCode,
             planId: this.config.formInfo?.lyricMetaData?.planId,
             planDetailsId: this.config.formInfo?.lyricMetaData?.planDetailsId,
@@ -64,7 +65,7 @@ class LyricRequestSender {
         try {
             const response = await sendLyricAuthenticatedRequest('/census/createMember/', formData)
             if(response?.data?.userid) {
-                return {lyricPatientId: response.data.userid};
+                return {lyricPatientId: response.data.userid, lyricExternalId: externalId};
             }
         } catch (e) {
             return {
