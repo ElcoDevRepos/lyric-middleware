@@ -16,6 +16,7 @@ const { WebDoctorsSymptomsController } = require("./controllers/webdoctors/sympt
 const { LyricUserData } = require("./services/lyricConsultationService/behaviors/fetchUserData");
 const { LyricEligibilityController } = require("./controllers/lyric/lyricEligibilityController");
 const { LyricPharmacyFinderController } = require("./controllers/lyric/pharmacyFinder");
+const { StartConsultationInformationController } = require("./controllers/lyric/startConsultationInformation");
 
 let Blob;
 var storage = multer.memoryStorage(); // Storing files in memory
@@ -1031,6 +1032,15 @@ app.post("/consultation/eligibility", async (req, res) => {
   try {
     const lyricEligibilityController = new LyricEligibilityController();
     await lyricEligibilityController.do(req, res);
+  } catch (e) {
+    return res.status(500).send({message: "Something went wrong, try again later"});
+  }
+});
+
+app.post("/consultation/start", async (req, res) => {
+  try {
+    const startConsultationInformationController = new StartConsultationInformationController();
+    await startConsultationInformationController.do(req, res);
   } catch (e) {
     return res.status(500).send({message: "Something went wrong, try again later"});
   }
