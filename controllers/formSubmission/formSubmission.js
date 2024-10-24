@@ -1,6 +1,8 @@
 const { LyricConsultationHandler } = require("../../services/consultationHandler/lyric/lyric");
 const { WebDoctorsConsultationHandler } = require("../../services/consultationHandler/webDoctors/webDoctors");
 const { FormFinder } = require("../../services/formFinder/formFinder");
+const { MemberService } = require("../../services/memberService/memberService");
+const { CreateMemberBehavior } = require("../../services/newPatientHandler/base/behaviors/createMemberBehavior");
 const { NewLyricPatientHandler } = require("../../services/newPatientHandler/lyric/lyric");
 const { WebDoctorsNewPatientHandler } = require("../../services/newPatientHandler/webDoctors/webDoctors");
 const { BasePostController } = require("../base/base");
@@ -41,15 +43,31 @@ class FormSubmissionController extends BasePostController {
         } 
 
         if(formInfo.intent === 'New Patient') {
-            
+            let foundMember;
+
+            const formFinder = new FormFinder({formId: verified_fields.formId}); 
+            const formInfo = await formFinder.getFormInfo();
+
+            const memberService = new MemberService();
+            const email = verified_fields?.form?.email;
+            if(email) {
+                foundMember = await memberService.findMemberByEmail(email);
+            }
+
             let returnInfo = {};
-            if(formInfo?.userDataStore?.lyric) {
+            if(!foundMember && !formInfo?.userDataStore?.lyric && !formInfo?.userDataStore?.webDoctors) {
+                const createMemberBehavior = new CreateMemberBehavior({email});
+                const newMember = await createMemberBehavior.create();
+                returnInfo.newMember = newMember;
+            }
+
+            if(formInfo?.userDataStore?.lyric && !foundMember?.lyricPatientId) {
                 const newPatientHandler = new NewLyricPatientHandler({...verified_fields, formInfo, form: verified_fields.form});
                 const lyricData = await newPatientHandler.createPatient();
                 returnInfo.lyricData = lyricData;
             }
 
-            if(formInfo?.userDataStore?.webDoctors) {
+            if(formInfo?.userDataStore?.webDoctors && !foundMember?.webDoctorsPatientId) {
                 const newPatientHandler = new WebDoctorsNewPatientHandler({...verified_fields, formInfo, form: verified_fields.form});
                 const webDoctorsData = await newPatientHandler.createPatient();
                 returnInfo.webDoctorsData = webDoctorsData;
