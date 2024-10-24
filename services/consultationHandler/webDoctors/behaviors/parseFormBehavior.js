@@ -5,7 +5,7 @@ class WebDoctorConsultationFormParser extends BaseFormParser {
         super(config);
 
         this.formFields = [
-            'patientId',
+            'email',
             'reasonId',
             'symptomIds',
             'createdBy'

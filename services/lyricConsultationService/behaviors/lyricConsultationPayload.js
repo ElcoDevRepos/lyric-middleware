@@ -30,6 +30,7 @@ class LyricConsultationPayload {
             ])
         );
 
+        console.log("WHEN SCHEDULED: ", this.config.whenScheduled);
         let appointment_details;
         if (this.config.consultationType == "urgentcare") {
             appointment_details = {
