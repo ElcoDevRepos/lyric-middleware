@@ -20,9 +20,18 @@ class StartConsultationInformationController extends BasePostController {
         const ssoToken = await getSSOToken(externalId, groupCode);
         const token = ssoToken.token;
         const url = `/v2/consultation/${type}?user_id=${parseInt(patientId)}&modality=${modality}`
-        const res = await sendLyricAuthenticatedRequest(url, {}, 'get', token);
-        const consultData = res.data;
-        return consultData;
+        try {
+            const res = await sendLyricAuthenticatedRequest(url, {}, 'get', token);
+            const consultData = res.data;
+            return consultData;
+        } catch (e) {
+            return {
+                error: {
+                    code: e.response.status,
+                    message: e.response.data
+                }
+            }
+        }
     }
 }
 
