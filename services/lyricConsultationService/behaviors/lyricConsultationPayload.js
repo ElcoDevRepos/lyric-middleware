@@ -41,12 +41,12 @@ class LyricConsultationPayload {
         } else {
             appointment_details = {
                 provider_id: this.config.provider_id,
-                time_slot_id: this.config.timeslot,
+                time_slot_id: this.config.time_slot_id,
                 consult_time_zone: "America/Chicago",
             };
         }
 
-        const patientPayload = {
+        let patientPayload = {
             patient: {
                 user_id: parseInt(userId),
                 ehr: {
@@ -76,6 +76,10 @@ class LyricConsultationPayload {
             labs: []
         };
 
+        if (this.config.consultationType != "urgentcare") {
+            patientPayload.questionnaires = this.config.questionnaires || [];
+        }
+        console.log("PAYLOAD: ", patientPayload)
         return patientPayload;
     }
 }

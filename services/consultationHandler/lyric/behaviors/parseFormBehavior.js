@@ -15,7 +15,10 @@ class LyricFormParser {
             'roi',
             'userId',
             'prescriptionRefillNeeded',
-            'consultationType'
+            'consultationType',
+            'provider_id',
+            'time_slot_id',
+            'questionnaires'
         ];
     }
 
@@ -28,6 +31,7 @@ class LyricFormParser {
             }
         });
 
+        console.log("data form: ", data.time_slot_id)
         return data;
     }
 }

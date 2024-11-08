@@ -990,6 +990,7 @@ app.post("/newConsultationWithType", async (req, res) => {
             chief_complaint_id: chiefComplaint,
             other_problems: otherProblems,
           },
+          questionnaires: []
         };
         let accessToken = await getSSOAPIToken(memberExternalId, groupCode);
         var config = {
@@ -1004,19 +1005,26 @@ app.post("/newConsultationWithType", async (req, res) => {
 
         console.log("PAYLOAD: ", patientPayload)
         try {
-          // const response = await axios(config);
+          const response = await axios(config);
 
           if (response.status == 200) {
             if (response.data.success) {
+              console.log("SUCCESS")
               res.send(response.data);
             } else {
+              console.log("SUCCESS")
+
               res.status(400).send(response.data.message);
             }
           } else {
+            console.log("FAILED 500")
+
             console.log(response.data);
             res.status(500).send("Something went wrong");
           }
         } catch (error) {
+          console.log("FAILED 400")
+
           // console.log(error);
           res.status(400).send(error.response.data.message);
         }
@@ -1024,6 +1032,8 @@ app.post("/newConsultationWithType", async (req, res) => {
     }
   } catch (error) {
     console.log(error);
+    console.log("FAILED 500 NUMBER 2")
+
     res.status(500).send("Something went wrong");
   }
 });
