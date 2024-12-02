@@ -17,7 +17,7 @@ class CreateUserService {
         }
 
         const createUserBehavior = new this.createUserBehavior();
-        const createdUser = await createUserBehavior.create({creator: this.creator, newUser});
+        const createdUser = await createUserBehavior.create({creator: this.creator, newUser, permissions});
         return createdUser;
     }
 }

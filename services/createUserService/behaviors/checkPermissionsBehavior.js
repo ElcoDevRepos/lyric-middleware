@@ -14,23 +14,31 @@ class CheckPermissionBehavior {
             }
         }
 
-        return this.compareRoles(creatorRole, newUser);
+        const canCreate = this.compareRoles(creatorRole, newUser);
+
+        if(!canCreate) {
+            return {
+                error: {
+                    code: 403, 
+                    message: `${creatorRole?.role}s cannot create ${newUser?.role}s`
+                }
+            }
+        } 
+
+        return {creatorRole};
     }
 
     async findCreatorRole(creator) {
         try {
             const fireBaseService = new FirebaseService();
-            console.log("creator id: ", creator.id);
             const userRole = await fireBaseService.findDocumentById('roles', creator.id);
             return userRole;
         } catch (e) {
-            console.log(e);
-            console.log("couldn't find")
             return null;
         }
     }
 
-    async compareRoles(creatorRole, newUser) {
+    compareRoles(creatorRole, newUser) {
         const rolePermissions = CreatePermissions;
         const role = creatorRole?.role;
         if(!role) {
