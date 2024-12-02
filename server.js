@@ -17,7 +17,10 @@ const { LyricUserData } = require("./services/lyricConsultationService/behaviors
 const { LyricEligibilityController } = require("./controllers/lyric/lyricEligibilityController");
 const { LyricPharmacyFinderController } = require("./controllers/lyric/pharmacyFinder");
 const { StartConsultationInformationController } = require("./controllers/lyric/startConsultationInformation");
+const { CreateUserService } = require("./services/createUserService/createUserService");
 
+const { CreateUserController } = require("./controllers/createUser/createUserController");
+const { admin } = require("./firebase");
 let Blob;
 var storage = multer.memoryStorage(); // Storing files in memory
 var upload = multer({ storage: storage });
@@ -67,6 +70,7 @@ app.use(function (req, res, next) {
   );
   next();
 });
+app.use((req, res, next)=>{req.user = null; next()})
 app.use("/", webDoctorsRoutes);
 const authMiddleware = (req, res, next) => {
   const user = auth(req);
@@ -516,6 +520,35 @@ app.post("/login", async (req, res) => {
     }
   } catch (error) {
     res.status(500).send("Something went wrong");
+  }
+});
+
+async function authenticateFirebaseToken(req, res, next) {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res.status(401).send({ message: "Unauthorized" });
+  }
+
+  const idToken = authHeader.split("Bearer ")[1];
+  try {
+
+      const decodedToken = await admin.auth().verifyIdToken(idToken);
+      req.user = decodedToken; // Attach user info to the request
+      next();
+  } catch (error) {
+      console.log(error);
+      return res.status(401).send({ message: "Invalid token" });
+  }
+}
+
+app.post("/create-user", authenticateFirebaseToken, async (req, res) => {
+  try {
+    const createUserController = new CreateUserController();
+    await createUserController.do(req, res);
+  } catch (e) {
+    console.log(e);
+    return res.status(500).send({message: "Something went wrong, please try again later"});
   }
 });
 
