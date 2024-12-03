@@ -39,7 +39,11 @@ class CheckPermissionBehavior {
     }
 
     compareRoles(creatorRole, newUser) {
-        const rolePermissions = CreatePermissions;
+        let rolePermissions = CreatePermissions;
+        if(this.data?.rolePermissions) {
+            rolePermissions = this.data.rolePermissions;
+        }
+
         const role = creatorRole?.role;
         if(!role) {
             return false;

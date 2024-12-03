@@ -1,4 +1,4 @@
-const { collection, query, where, getDocs, getDoc, setDoc, doc } = require("firebase/firestore");
+const { collection, query, where, getDocs, getDoc, setDoc, doc, updateDoc } = require("firebase/firestore");
 const { firestore, admin } = require("../../firebase");
 
 class FirebaseService {
@@ -76,6 +76,18 @@ class FirebaseService {
                     message: message
                 }
             }
+        }
+    }
+
+    async updateDocumentById(collectionName, documentId, data) {
+        try {
+            const docRef = doc(firestore, collectionName, documentId);
+            
+            await updateDoc(docRef, data);
+            
+            return { id: documentId, ...data }; 
+        } catch (error) {
+            throw new Error(`Failed to update the document: ${error.message}`);
         }
     }
 }

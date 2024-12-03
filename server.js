@@ -21,6 +21,7 @@ const { CreateUserService } = require("./services/createUserService/createUserSe
 
 const { CreateUserController } = require("./controllers/createUser/createUserController");
 const { admin } = require("./firebase");
+const { UpdateUserGroupsController } = require("./controllers/updateUser/updateUserGroups");
 let Blob;
 var storage = multer.memoryStorage(); // Storing files in memory
 var upload = multer({ storage: storage });
@@ -546,6 +547,16 @@ app.post("/create-user", authenticateFirebaseToken, async (req, res) => {
   try {
     const createUserController = new CreateUserController();
     await createUserController.do(req, res);
+  } catch (e) {
+    console.log(e);
+    return res.status(500).send({message: "Something went wrong, please try again later"});
+  }
+});
+
+app.patch("/update-user-groups", authenticateFirebaseToken, async (req, res)=> {
+  try {
+    const updateGroupsController = new UpdateUserGroupsController();
+    await updateGroupsController.do(req, res);
   } catch (e) {
     console.log(e);
     return res.status(500).send({message: "Something went wrong, please try again later"});
