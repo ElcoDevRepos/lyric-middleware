@@ -16,6 +16,7 @@ class CreateUserBehavior {
             fullName: newUser.fullName,
             email: newUser.email,
             groups: newUser.groups,
+            roleName: newUser.role,
             createdAt: new Date()
         }
 
