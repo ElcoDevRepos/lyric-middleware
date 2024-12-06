@@ -1,5 +1,8 @@
+const { collection, where, query, getDocs } = require("firebase/firestore");
 const { getCityName, getAddressDetailsFromZip } = require("../../../../lib/google/getCity");
 const { sendLyricAuthenticatedRequest } = require("../../../../lib/lyric/authRequest")
+const { v4: uuidv4 } = require('uuid');
+const { firestore } = require("../../../../firebase");
 
 class LyricRequestSender {
     constructor(config) {
@@ -30,7 +33,7 @@ class LyricRequestSender {
 
         const stateId = parseInt(state.state_id);
 
-        const externalId = this.config.formSubmissionId;
+        const externalId = await this.createLyricExternalId();
         const convertedData = {
             primaryExternalId: externalId,
             groupCode: this.config.formInfo?.lyricMetaData?.groupCode,
@@ -74,6 +77,43 @@ class LyricRequestSender {
                     message: e.response.data
                 }
             }
+        }
+    }
+
+    async createLyricExternalId() {
+        let externalId = this.config.formSubmissionId;
+        if(!externalId) {
+            externalId = await this.generateId();
+        }
+
+        const exists = await this.checkForExistingExternalId(externalId);
+        if(exists) {
+            externalId = await this.generateId();
+        }
+
+        return externalId;
+    }
+
+    async checkForExistingExternalId(externalId) {
+        try {
+            const membersCollection = collection(firestore, 'members');
+            const q = query(membersCollection, where('lyricExternalId', '==', externalId));
+            const querySnapshot = await getDocs(q);
+    
+            return !querySnapshot.empty; 
+        } catch (error) {
+            console.error('Error checking for existing external ID:', error);
+            throw new Error('Failed to check for existing external ID');
+        }
+    }
+
+    async generateId() {
+        try {
+            const newId = uuidv4(); 
+            return newId;
+        } catch (error) {
+            console.error('Error generating new ID:', error);
+            throw new Error('Failed to generate a new ID');
         }
     }
 }
