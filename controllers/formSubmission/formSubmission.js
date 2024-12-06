@@ -8,13 +8,14 @@ const { WebDoctorsNewPatientHandler } = require("../../services/newPatientHandle
 const { BasePostController } = require("../base/base");
 
 class FormSubmissionController extends BasePostController {
-    constructor() {
+    constructor(submitConfig) {
         super();
         this.required_fields = [
             'formId',
             'form',
             'formSubmissionId'
         ]
+        this.submitConfig = submitConfig;
     }
 
     async post(verified_fields) {
@@ -29,14 +30,32 @@ class FormSubmissionController extends BasePostController {
             let returnInfo = {};
             if(formInfo?.userDataStore?.lyric) {
                 const consultationHandler = new LyricConsultationHandler({...verified_fields, formInfo, form: verified_fields.form});
-                const lyricData = await consultationHandler.createConsultation();
-                returnInfo.lyricData = lyricData;
+                if(submitConfig?.validate) {
+                    return {
+                        error: {
+                            code: 400,
+                            message: "invalid form"
+                        }
+                    }
+                } else {
+                    const lyricData = await consultationHandler.createConsultation();
+                    returnInfo.lyricData = lyricData;
+                }
             }
 
             if(formInfo?.userDataStore?.webDoctors) {
                 const consultationHandler = new WebDoctorsConsultationHandler({...verified_fields, formInfo, form: verified_fields.form});
-                const webDoctorsData = await consultationHandler.createConsultation();
-                returnInfo.webDoctorsData = webDoctorsData;
+                if(submitConfig?.validate) {
+                    return {
+                        error: {
+                            code: 400,
+                            message: "invalid form"
+                        }
+                    }
+                } else {
+                    const webDoctorsData = await consultationHandler.createConsultation();
+                    returnInfo.webDoctorsData = webDoctorsData;
+                }
             }
 
             return returnInfo;
@@ -57,20 +76,47 @@ class FormSubmissionController extends BasePostController {
             let returnInfo = {};
             if(!foundMember && !formInfo?.userDataStore?.lyric && !formInfo?.userDataStore?.webDoctors) {
                 const createMemberBehavior = new CreateMemberBehavior({email});
-                const newMember = await createMemberBehavior.create();
-                returnInfo.newMember = newMember;
+                if(submitConfig?.validate) {
+                    return {
+                        error: {
+                            code: 400,
+                            message: "invalid form"
+                        }
+                    }
+                } else {
+                    const newMember = await createMemberBehavior.create();
+                    returnInfo.newMember = newMember;
+                }
             }
 
             if(formInfo?.userDataStore?.lyric && !foundMember?.lyricPatientId) {
                 const newPatientHandler = new NewLyricPatientHandler({...verified_fields, formInfo, form: verified_fields.form});
-                const lyricData = await newPatientHandler.createPatient();
-                returnInfo.lyricData = lyricData;
+                if(submitConfig?.validate) {
+                    return {
+                        error: {
+                            code: 400,
+                            message: "invalid form"
+                        }
+                    }
+                } else {
+                    const lyricData = await newPatientHandler.createPatient();
+                    returnInfo.lyricData = lyricData;
+                }
             }
 
             if(formInfo?.userDataStore?.webDoctors && !foundMember?.webDoctorsPatientId) {
                 const newPatientHandler = new WebDoctorsNewPatientHandler({...verified_fields, formInfo, form: verified_fields.form});
-                const webDoctorsData = await newPatientHandler.createPatient();
-                returnInfo.webDoctorsData = webDoctorsData;
+                if(submitConfig?.validate) {
+                    return {
+                        error: {
+                            code: 400,
+                            message: "invalid form"
+                        }
+                    }
+                } else {
+                    const webDoctorsData = await newPatientHandler.createPatient();
+                    returnInfo.webDoctorsData = webDoctorsData;
+                }
             }
 
             return returnInfo;

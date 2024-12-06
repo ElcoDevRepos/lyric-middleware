@@ -22,6 +22,10 @@ const { CreateUserService } = require("./services/createUserService/createUserSe
 const { CreateUserController } = require("./controllers/createUser/createUserController");
 const { admin } = require("./firebase");
 const { UpdateUserGroupsController } = require("./controllers/updateUser/updateUserGroups");
+const { CreateStripePaymentIntentController } = require("./controllers/stripe/createPaymentIntent");
+require("dotenv").config();
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+
 let Blob;
 var storage = multer.memoryStorage(); // Storing files in memory
 var upload = multer({ storage: storage });
@@ -809,6 +813,44 @@ app.post("/newConsultation", async (req, res) => {
     if (error.response.data) {
       res.send(error.response.data.message);
     }
+  }
+});
+
+app.post('/form/validate', async (req, res)=>{
+  try {
+    const formSubmissionController = new FormSubmissionController({config: {validate: true}});
+    await formSubmissionController.do(req, res);
+  } catch (e) {
+    console.log(e);
+    return res.status(500).send({message:"something went wrong, try again later"});
+  }
+});
+
+app.post("/stripe/create-payment-intent", async (req, res) => {
+  try {
+    const controller = new CreateStripePaymentIntentController();
+    await controller.do(req, res);
+  } catch (e) {
+    console.log(e);
+    return res.status(500).send({message:"something went wrong, try again later"});
+  }
+}); 
+
+app.post("/stripe/submit-form-test", async (req, res) => {
+  try {
+    console.log("req.body: ", req.body)
+    const { paymentIntentId } = req.body; 
+    console.log("paymentIntentId: ", paymentIntentId)
+
+    if(false) {
+      await stripe.paymentIntents.capture(paymentIntentId);
+      return  res.status(200).send({message: "success"});
+    } else {
+      await stripe.paymentIntents.cancel(paymentIntentId);
+      return res.status(500).send({message: "Payment failed"})
+    }
+  } catch (e){
+    return res.status(500).send({message: "Something went wrong"})
   }
 });
 
