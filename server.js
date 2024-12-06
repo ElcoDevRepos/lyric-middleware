@@ -818,7 +818,7 @@ app.post("/newConsultation", async (req, res) => {
 
 app.post('/form/validate', async (req, res)=>{
   try {
-    const formSubmissionController = new FormSubmissionController({config: {validate: true}});
+    const formSubmissionController = new FormSubmissionController({validate: true});
     await formSubmissionController.do(req, res);
   } catch (e) {
     console.log(e);
