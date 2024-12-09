@@ -19,7 +19,6 @@ class LyricEligibilityController extends BasePostController {
     async post(verified_fields) {
         const {groupCode, email, type, modality} = verified_fields;
         const memberService = new MemberService();
-        console.log(email);
         const member = await memberService.findMemberByEmail(email);
         if(!member || !member.lyricExternalId) {
             return {
@@ -29,8 +28,6 @@ class LyricEligibilityController extends BasePostController {
                 }
             }
         }
-        console.log("member.lyricExternalId: ", member.lyricExternalId);
-
         const ssoToken = await getSSOToken(member.lyricExternalId, groupCode);
         const token = ssoToken.token;
 

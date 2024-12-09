@@ -31,7 +31,6 @@ class LyricFormParser {
             }
         });
 
-        console.log("data form: ", data.time_slot_id)
         return data;
     }
 }

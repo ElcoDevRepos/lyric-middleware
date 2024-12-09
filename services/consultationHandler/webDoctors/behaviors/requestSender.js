@@ -23,7 +23,6 @@ class WebDoctorConsultationRequest {
             CreatedBy: patientId
         };
 
-        console.log("Data: ", data);
         try {
             const response = await sendWebDoctorsAuthRequest("/api/encounter/create", JSON.stringify(data));
             if(response?.data) {

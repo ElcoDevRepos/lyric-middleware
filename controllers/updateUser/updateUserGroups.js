@@ -39,7 +39,6 @@ class UpdateUserGroupsController extends BasePostController {
 
         const updatedUser = await firebaseService.updateDocumentById('users', newUser.id, {groups: verified_fields.groups});
 
-        console.log("returning: ", updatedUser);
         return updatedUser;
     } 
 }

@@ -39,7 +39,6 @@ class FirebaseService {
     }
 
     async createDocument(collectionName, data, id = null) {
-        console.log("data: ", data);
         try {
             const docRef = id 
                 ? doc(firestore, collectionName, id) 

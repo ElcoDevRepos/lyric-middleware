@@ -135,7 +135,6 @@ async function getSSOAPIToken(memberExternalId, groupCode) {
         },
       };
       response = await axios(config);
-      console.log("SSO ACCESS RES: ", response.data);
       if (response.data.success) {
         return response.data.accessToken;
       } else {
@@ -689,7 +688,6 @@ app.post("/createMemberIV", upload.none(), async (req, res) => {
     accessToken = accessToken.access_token;
     const response = await createMemberHelper(req, accessToken, false, true);
     if (true) {
-      // console.log(response);
       if (response.data) {
         if (response.data.Message) {
           res.send({
@@ -710,7 +708,6 @@ app.post("/createMemberIV", upload.none(), async (req, res) => {
       res.send(response.data.Message);
     }
   } catch (error) {
-    // console.log(error);
     if (true) {
       res.send({
         success: false,
@@ -838,9 +835,7 @@ app.post("/stripe/create-payment-intent", async (req, res) => {
 
 app.post("/stripe/submit-form-test", async (req, res) => {
   try {
-    console.log("req.body: ", req.body)
     const { paymentIntentId } = req.body; 
-    console.log("paymentIntentId: ", paymentIntentId)
 
     if(false) {
       await stripe.paymentIntents.capture(paymentIntentId);
@@ -1089,37 +1084,28 @@ app.post("/newConsultationWithType", async (req, res) => {
           },
         };
 
-        console.log("PAYLOAD: ", patientPayload)
         try {
           const response = await axios(config);
 
           if (response.status == 200) {
             if (response.data.success) {
-              console.log("SUCCESS")
               res.send(response.data);
             } else {
-              console.log("SUCCESS")
-
               res.status(400).send(response.data.message);
             }
           } else {
             console.log("FAILED 500")
 
-            console.log(response.data);
             res.status(500).send("Something went wrong");
           }
         } catch (error) {
           console.log("FAILED 400")
 
-          // console.log(error);
           res.status(400).send(error.response.data.message);
         }
       }
     }
   } catch (error) {
-    console.log(error);
-    console.log("FAILED 500 NUMBER 2")
-
     res.status(500).send("Something went wrong");
   }
 });

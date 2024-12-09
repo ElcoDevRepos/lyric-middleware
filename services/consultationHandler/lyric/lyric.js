@@ -11,6 +11,7 @@ class LyricConsultationHandler extends ConsultationHandler {
     constructor(config) {
         super(config);
 
+        this.verifyFormBehavior = null;
         this.parseFormBehavior = LyricFormParser; 
         this.sendRequestBehavior = LyricRequestSender; 
         this.postProcessBehavior = LyricPostProcessor; 

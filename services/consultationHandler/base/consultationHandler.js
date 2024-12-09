@@ -2,6 +2,7 @@ class ConsultationHandler {
     constructor(config) {
         this.config = config;
 
+        this.verifyFormBehavior = null;
         this.parseFormBehavior = null; // takes md care form and converts it to web doctor or lyric form
         this.sendRequestBehavior = null; // sends the parsed form to the correct endpoint 
         this.postProcessBehavior = null; 
@@ -24,6 +25,12 @@ class ConsultationHandler {
         const postData = await postProcessBehavior.process();
 
         return postData;
+    }
+
+    async verifyForm() {
+        const verifyFormBehavior = new this.verifyFormBehavior(this.config);
+        const verified = await verifyFormBehavior.verifyForm();
+        return verified;
     }
 }
 

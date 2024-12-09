@@ -30,9 +30,7 @@ class CreateMemberBehavior {
 
             if (Object.keys(updateData).length > 0) {
                 await updateDoc(userDocRef, updateData);
-                console.log('Document updated with:', updateData);
             } else {
-                console.log('No fields to update.');
             }
         } else {
             const newMember = {

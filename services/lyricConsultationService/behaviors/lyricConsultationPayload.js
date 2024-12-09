@@ -30,7 +30,6 @@ class LyricConsultationPayload {
             ])
         );
 
-        console.log("WHEN SCHEDULED: ", this.config.whenScheduled);
         let appointment_details;
         if (this.config.consultationType == "urgentcare") {
             appointment_details = {
@@ -79,7 +78,6 @@ class LyricConsultationPayload {
         if (this.config.consultationType != "urgentcare") {
             patientPayload.questionnaires = this.config.questionnaires || [];
         }
-        console.log("PAYLOAD: ", patientPayload)
         return patientPayload;
     }
 }
