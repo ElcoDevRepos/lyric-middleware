@@ -1,8 +1,14 @@
+const { getAddressDetailsFromZip } = require("../../../../lib/google/getCity");
+
 class VerifyWebDoctorsPatientForm {
     constructor(config) {
         this.config = config;
     }
     async verifyForm() {
+        const verifiedZip = await this.verifyAddress();
+        if(verifiedZip?.error) {
+            return verifiedZip;
+        }
         const date_of_birth = this.config?.form?.date_of_birth;
         if (!date_of_birth) {
             return {
@@ -33,6 +39,37 @@ class VerifyWebDoctorsPatientForm {
 
         return {
             isValid: true
+        }
+    }
+
+    async verifyAddress() {
+        const form = this.config?.form;
+
+        let zip = "";
+        let addressComponents = null;
+
+        if(!form.zip) {
+            return {
+                error: {
+                    code: 400,
+                    message: "No Zip provided"
+                }
+            }
+        }
+
+        if (form.zip) {
+            zip = form.zip.split("-")[0];
+            try {
+                addressComponents = await getAddressDetailsFromZip(zip);
+            } catch (e) {
+                console.log(e);
+                return {
+                    error: {
+                        code: 400,
+                        message: "invalid zip / address"
+                    }
+                }
+            }
         }
     }
 }
