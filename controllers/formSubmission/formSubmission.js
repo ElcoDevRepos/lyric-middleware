@@ -84,16 +84,32 @@ class FormSubmissionController extends BasePostController {
                     const lyricData = await newPatientHandler.createPatient();
                     returnInfo.lyricData = lyricData;
                 }
+            } else if(foundMember?.lyricPatientId) {
+                return {
+                    error: {
+                        code: 400,
+                        message: "This email is taken."
+                    }
+                }
             }
 
             if(formInfo?.userDataStore?.webDoctors && !foundMember?.webDoctorsPatientId) {
+
                 const newPatientHandler = new WebDoctorsNewPatientHandler({...verified_fields, formInfo, form: verified_fields.form});
                 if(submitConfig?.validate) {
+                    console.log("validating");
                     const verifyData = await newPatientHandler.verifyForm();
                     return verifyData;
                 } else {
                     const webDoctorsData = await newPatientHandler.createPatient();
                     returnInfo.webDoctorsData = webDoctorsData;
+                }
+            } else if(foundMember?.webDoctorsPatientId) {
+                return {
+                    error: {
+                        code: 400,
+                        message: "This email is taken."
+                    }
                 }
             }
 
