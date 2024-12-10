@@ -23,6 +23,7 @@ const { CreateUserController } = require("./controllers/createUser/createUserCon
 const { admin } = require("./firebase");
 const { UpdateUserGroupsController } = require("./controllers/updateUser/updateUserGroups");
 const { CreateStripePaymentIntentController } = require("./controllers/stripe/createPaymentIntent");
+const { CancelPaymentIntentController } = require("./controllers/stripe/cancelPaymentIntent");
 require("dotenv").config();
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
@@ -826,6 +827,16 @@ app.post('/form/validate', async (req, res)=>{
 app.post("/stripe/create-payment-intent", async (req, res) => {
   try {
     const controller = new CreateStripePaymentIntentController();
+    await controller.do(req, res);
+  } catch (e) {
+    console.log(e);
+    return res.status(500).send({message:"something went wrong, try again later"});
+  }
+}); 
+
+app.post("/stripe/cancel-payment-intent", async (req, res) => {
+  try {
+    const controller = new CancelPaymentIntentController();
     await controller.do(req, res);
   } catch (e) {
     console.log(e);

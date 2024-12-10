@@ -7,7 +7,6 @@ class BaseHandlePaymentBehavior {
     }
 
     async handlePayment() {
-        console.log("handling payment: ", this.config);
         const {stripePaymentIntentId} = this.config;
         if(!stripePaymentIntentId) {
             return;
