@@ -1,3 +1,5 @@
+const { BaseHandlePaymentBehavior } = require("../../newPatientHandler/base/behaviors/handlePaymentBehavior");
+
 class ConsultationHandler {
     constructor(config) {
         this.config = config;
@@ -6,6 +8,7 @@ class ConsultationHandler {
         this.parseFormBehavior = null; // takes md care form and converts it to web doctor or lyric form
         this.sendRequestBehavior = null; // sends the parsed form to the correct endpoint 
         this.postProcessBehavior = null; 
+        this.handlePaymentBehavior = BaseHandlePaymentBehavior;
     }
 
     async createConsultation() {
@@ -24,6 +27,8 @@ class ConsultationHandler {
         const postProcessBehavior = new this.postProcessBehavior({...this.config, ...response});
         const postData = await postProcessBehavior.process();
 
+        const handlePaymentBehavior = new this.handlePaymentBehavior(this.config);
+        await handlePaymentBehavior.handlePayment();
         return postData;
     }
 
